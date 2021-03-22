@@ -1,6 +1,6 @@
 {
     "name": "bakabot/core",
-    "description": "Provides accessors to single-value PHP Attributes.",
+    "description": "Provides the core functionality and facilities of the bot.",
     "license": "MIT",
     "require": {
         "php": ">=8.0"
