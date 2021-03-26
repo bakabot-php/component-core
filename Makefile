@@ -12,9 +12,10 @@ csfix: vendor
 psalm: vendor
 	docker-compose run --rm php vendor/bin/psalm
 
+.PHONY: tests
 tests: vendor
 	docker-compose run --rm php -dxdebug.mode=coverage vendor/bin/phpunit
 
 vendor: composer.json
 	docker-compose run --rm composer validate
-	docker-compose run --rm composer install --quiet --no-cache
+	docker-compose run --rm composer install --quiet --no-cache --ignore-platform-reqs
