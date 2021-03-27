@@ -15,7 +15,7 @@ final class SendMessage implements SendMessageInterface
     private ChannelInterface $channel;
     private ?array $embed = null;
     private ?string $message = null;
-    private bool $pingRecipient = false;
+    private bool $pingRecipient;
     private ?UserInterface $recipient = null;
 
     public function __construct(
@@ -23,7 +23,7 @@ final class SendMessage implements SendMessageInterface
         ?string $message,
         ?array $embed,
         ?UserInterface $recipient = null,
-        ?bool $pingRecipient = null
+        bool $pingRecipient = false
     ) {
         if ($message === null && $embed === null) {
             throw new LogicException('You need to set either a message, an embed, or both.');
@@ -33,10 +33,25 @@ final class SendMessage implements SendMessageInterface
         $this->embed = $embed;
         $this->message = $message;
         $this->recipient = $recipient;
+        $this->pingRecipient = $pingRecipient && ($this->recipient && !$this->channel->isPrivate());
+    }
 
-        if ($pingRecipient !== null) {
-            $this->pingRecipient = $pingRecipient;
-        }
+    public static function withEmbed(
+        ChannelInterface $channel,
+        array $embed,
+        ?UserInterface $recipient = null,
+        bool $pingRecipient = false
+    ): self {
+        return new self($channel, null, $embed, $recipient, $pingRecipient);
+    }
+
+    public static function withMessage(
+        ChannelInterface $channel,
+        string $message,
+        ?UserInterface $recipient = null,
+        bool $pingRecipient = false
+    ): self {
+        return new self($channel, $message, null, $recipient, $pingRecipient);
     }
 
     public function getChannel(): ChannelInterface
@@ -61,10 +76,6 @@ final class SendMessage implements SendMessageInterface
 
     public function shouldPingRecipient(): bool
     {
-        if ($this->recipient === null || $this->channel->isPrivate()) {
-            return false;
-        }
-
         return $this->pingRecipient;
     }
 }

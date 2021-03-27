@@ -29,6 +29,16 @@ final class SendDirectMessage implements SendMessageInterface
         $this->recipient = $recipient;
     }
 
+    public static function withEmbed(UserInterface $recipient, array $embed): self
+    {
+        return new self($recipient, null, $embed);
+    }
+
+    public static function withMessage(UserInterface $recipient, string $message): self
+    {
+        return new self($recipient, $message, null);
+    }
+
     public function getEmbed(): ?array
     {
         return $this->embed;

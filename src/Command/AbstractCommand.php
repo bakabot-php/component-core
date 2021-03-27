@@ -14,7 +14,7 @@ abstract class AbstractCommand implements CommandInterface
     private ?Definition $argumentDefinition = null;
     /** @var array<string, string> */
     private array $arguments = [];
-    protected Payload $payload;
+    protected ?Payload $payload = null;
 
     protected function createArgumentDefinition(): Definition
     {
@@ -45,6 +45,8 @@ abstract class AbstractCommand implements CommandInterface
 
     final protected function getCommandPrefix(): string
     {
+        assert($this->payload !== null);
+
         return $this->payload->getCommandPrefix();
     }
 

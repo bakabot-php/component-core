@@ -12,7 +12,7 @@ abstract class AbstractAttributeTest extends TestCase
     protected const VALUE = null;
 
     /** @test */
-    public function contains_the_given_value(): void
+    public function wraps_the_given_value(): void
     {
         $class = static::ATTRIBUTE;
 
