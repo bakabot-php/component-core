@@ -10,9 +10,8 @@ csfix: vendor
 	docker-compose run --rm php vendor/bin/php-cs-fixer fix
 
 psalm: vendor
-	docker-compose run --rm php vendor/bin/psalm
+	docker-compose run --rm php vendor/bin/psalm --shepherd
 
-.PHONY: tests
 tests: vendor
 	docker-compose run --rm php -dxdebug.mode=coverage vendor/bin/phpunit
 
