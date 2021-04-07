@@ -6,7 +6,7 @@ namespace Bakabot;
 
 use Bakabot\Chat\User\UserInterface;
 use Bakabot\Command\Collection as CommandCollection;
-use Bakabot\Command\HelpCommandInterface;
+use Bakabot\Command\HelpCommand;
 
 interface EnvironmentInterface
 {
@@ -14,7 +14,7 @@ interface EnvironmentInterface
 
     public function getActiveUser(): UserInterface;
 
-    public function getHelpCommand(CommandCollection $commands, string $requestedCommand): HelpCommandInterface;
+    public function getHelpCommand(CommandCollection $commands, string $requestedCommand): HelpCommand;
 
     public function getName(): string;
 
