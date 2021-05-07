@@ -14,8 +14,8 @@ final class SendMessage implements SendMessageInterface
 
     private ChannelInterface $channel;
     private ?array $embed = null;
+    private bool $mentionRecipient;
     private ?string $message = null;
-    private bool $pingRecipient;
     private ?UserInterface $recipient = null;
 
     public function __construct(
@@ -23,7 +23,7 @@ final class SendMessage implements SendMessageInterface
         ?string $message,
         ?array $embed,
         ?UserInterface $recipient = null,
-        bool $pingRecipient = false
+        bool $mentionRecipient = false
     ) {
         if ($message === null && $embed === null) {
             throw new LogicException('You need to set either a message, an embed, or both.');
@@ -33,25 +33,25 @@ final class SendMessage implements SendMessageInterface
         $this->embed = $embed;
         $this->message = $message;
         $this->recipient = $recipient;
-        $this->pingRecipient = $pingRecipient && ($this->recipient && !$this->channel->isPrivate());
+        $this->mentionRecipient = $mentionRecipient && ($this->recipient && !$this->channel->isPrivate());
     }
 
     public static function withEmbed(
         ChannelInterface $channel,
         array $embed,
         ?UserInterface $recipient = null,
-        bool $pingRecipient = false
+        bool $mentionRecipient = false
     ): self {
-        return new self($channel, null, $embed, $recipient, $pingRecipient);
+        return new self($channel, null, $embed, $recipient, $mentionRecipient);
     }
 
     public static function withMessage(
         ChannelInterface $channel,
         string $message,
         ?UserInterface $recipient = null,
-        bool $pingRecipient = false
+        bool $mentionRecipient = false
     ): self {
-        return new self($channel, $message, null, $recipient, $pingRecipient);
+        return new self($channel, $message, null, $recipient, $mentionRecipient);
     }
 
     public function getChannel(): ChannelInterface
@@ -74,8 +74,8 @@ final class SendMessage implements SendMessageInterface
         return $this->recipient;
     }
 
-    public function shouldPingRecipient(): bool
+    public function shouldMentionRecipient(): bool
     {
-        return $this->pingRecipient;
+        return $this->mentionRecipient;
     }
 }

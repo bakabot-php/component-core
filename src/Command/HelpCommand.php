@@ -28,9 +28,15 @@ final class HelpCommand extends AbstractCommand
         return $commandName === '' ? null : $commandName;
     }
 
-    abstract protected function createCommandHelp(CommandInterface $command): ActionInterface;
+    private function createCommandHelp(CommandInterface $command): ActionInterface
+    {
 
-    abstract protected function createCommandOverview(): ActionInterface;
+    }
+
+    private function createCommandOverview(): ActionInterface
+    {
+
+    }
 
     public function getArgumentExpression(): string
     {

@@ -10,7 +10,7 @@ use Bakabot\Command\HelpCommand;
 
 interface EnvironmentInterface
 {
-    public function formatPing(UserInterface|string $identity): string;
+    public function formatMention(UserInterface|string $identity): string;
 
     public function getActiveUser(): UserInterface;
 
@@ -18,5 +18,5 @@ interface EnvironmentInterface
 
     public function getName(): string;
 
-    public function parsePing(string $ping): ?string;
+    public function parseMention(string $mention): ?string;
 }

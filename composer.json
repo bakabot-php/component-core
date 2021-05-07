@@ -1,12 +1,12 @@
 {
-    "name": "bakabot/core",
+    "name": "bakabot/component-core",
     "description": "Provides the core functionality and facilities of the bot.",
     "license": "MIT",
     "require": {
         "php": ">=8.0",
         "ext-pcntl": "*",
         "amphp/amp": "^2.5",
-        "bakabot/attribute": "^1.1.2",
+        "bakabot/attribute": "^2",
         "php-di/php-di": "^6.3",
         "psr/container": "^1.0",
         "psr/log": "^1.1",
@@ -15,7 +15,7 @@
         "twig/twig": "^3.3"
     },
     "require-dev": {
-        "bakabot/development": "^1.0",
+        "bakabot/development": "^2.0",
         "roave/security-advisories": "dev-latest"
     },
     "autoload": {

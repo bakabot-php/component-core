@@ -16,11 +16,10 @@ trait TriggerMessageTrait
         return $this->triggerMessage;
     }
 
-    public function setTriggerMessage(MessageInterface $triggerMessage): ActionInterface
+    public function setTriggerMessage(MessageInterface $triggerMessage): self
     {
         $this->triggerMessage = $triggerMessage;
 
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
         return $this;
     }
 
