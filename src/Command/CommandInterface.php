@@ -5,8 +5,9 @@ declare(strict_types = 1);
 namespace Bakabot\Command;
 
 use Bakabot\Action\ActionInterface;
+use Stringable;
 
-interface CommandInterface
+interface CommandInterface extends Stringable
 {
     public function getArgumentExpression(): string;
 

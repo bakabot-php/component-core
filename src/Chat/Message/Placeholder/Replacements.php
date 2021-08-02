@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Bakabot\Chat\Emoji;
+namespace Bakabot\Chat\Message\Placeholder;
 
 use Countable;
 use Spatie\Emoji\Emoji;

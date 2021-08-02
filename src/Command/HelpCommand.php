@@ -5,16 +5,30 @@ declare(strict_types = 1);
 namespace Bakabot\Command;
 
 use Bakabot\Action\ActionInterface;
+use Bakabot\Action\SendTemplatedMessage;
+use Bakabot\Command\Attribute\ArgumentExpression;
+use Bakabot\Command\Attribute\Description;
+use Bakabot\Command\Attribute\HelpText;
+use Bakabot\Command\Attribute\Name;
 
+#[ArgumentExpression('[command:string]')]
+#[Description('{{ help.description }}')]
+#[HelpText('{{ help.flavor_text }}')]
+#[Name(HelpCommand::NAME)]
 final class HelpCommand extends AbstractCommand
 {
     private Collection $commands;
-    private ?string $requestedCommand;
 
-    public function __construct(Collection $commands, ?string $requestedCommand = null)
+    /** @var string */
+    public const NAME = 'help';
+    /** @var string */
+    public const TEMPLATE_COMMAND_HELP = 'help.command_help';
+    /** @var string */
+    public const TEMPLATE_HELP_OVERVIEW = 'help.command_overview';
+
+    public function __construct(Collection $commands)
     {
         $this->commands = $commands;
-        $this->requestedCommand = $requestedCommand;
     }
 
     private function trimPrefix(?string $commandName): ?string
@@ -30,53 +44,50 @@ final class HelpCommand extends AbstractCommand
 
     private function createCommandHelp(CommandInterface $command): ActionInterface
     {
-
+        return new SendTemplatedMessage(
+            $this->getPayload()->getChannel(),
+            self::TEMPLATE_COMMAND_HELP,
+            [
+                'command' => $command,
+                'prefix' => $this->getPayload()->getCommandPrefix(),
+            ]
+        );
     }
 
-    private function createCommandOverview(): ActionInterface
-    {
-
-    }
-
-    public function getArgumentExpression(): string
-    {
-        return '[command:string]';
-    }
-
-    public function getDescription(?CommandInterface $command = null): string
-    {
-        if ($command && !$this->isFallback()) {
-            return $this->getDescriptionOverview();
-        }
-
-        return $this->getDescriptionDefault();
-    }
-
-    public function getName(): string
-    {
-        return 'help';
-    }
-
-    public function isFallback(): bool
-    {
-        return $this->requestedCommand !== $this->getName();
+    public static function createCommandOverview(
+        Collection $commands,
+        Payload $payload,
+        ?string $requestedCommand = null
+    ): ActionInterface {
+        return new SendTemplatedMessage(
+            $payload->getChannel(),
+            self::TEMPLATE_HELP_OVERVIEW,
+            [
+                'commands' => $commands,
+                'prefix' => $payload->getCommandPrefix(),
+                'requested_command' => $requestedCommand,
+            ]
+        );
     }
 
     public function run(): ActionInterface
     {
-        $this->requestedCommand = $this->trimPrefix($this->getArgument('command'));
+        $requestedCommand = $this->trimPrefix($this->getArgument('command'));
 
-        if ($this->requestedCommand === $this->getName()) {
+        if ($requestedCommand === null) {
+            return self::createCommandOverview($this->commands, $this->getPayload());
+        }
+
+        if ($requestedCommand === $this->getName()) {
             return $this->createCommandHelp($this);
         }
 
-        if (
-            !$this->requestedCommand
-            || ($commandToHelpWith = $this->commands->findByName($this->requestedCommand)) === null
-        ) {
-            return $this->createCommandOverview();
+        $command = $this->commands->findByName($requestedCommand);
+
+        if ($command === null) {
+            return self::createCommandOverview($this->commands, $this->getPayload(), $requestedCommand);
         }
 
-        return $this->createCommandHelp($commandToHelpWith);
+        return $this->createCommandHelp($command);
     }
 }

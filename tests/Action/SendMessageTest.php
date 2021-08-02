@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Bakabot\Action;
 
 use Bakabot\Chat\Channel\ChannelInterface;
+use Bakabot\Chat\Message\MessageInterface;
 use Bakabot\Chat\User\UserInterface;
 use LogicException;
 use PHPUnit\Framework\TestCase;
@@ -12,39 +13,33 @@ use PHPUnit\Framework\TestCase;
 class SendMessageTest extends TestCase
 {
     /** @test */
-    public function needs_either_message_or_embed(): void
+    public function needs_either_message_or_context(): void
     {
         $this->expectException(LogicException::class);
 
-        new SendMessage($this->createMock(ChannelInterface::class), null, null);
+        new SendMessage($this->createMock(ChannelInterface::class));
     }
 
     /** @test */
     public function acts_as_dto(): void
     {
         $channel = $this->createMock(ChannelInterface::class);
-        $action = new SendMessage($channel, 'Hello World!', []);
+        $action = new SendMessage($channel, 'Hello World!');
 
-        self::assertSame($channel, $action->getChannel());
-        self::assertNull($action->getRecipient());
+        self::assertSame($channel, $action->getTarget());
         self::assertSame('Hello World!', $action->getMessage());
-        self::assertSame([], $action->getEmbed());
-        self::assertFalse($action->shouldPingRecipient());
+        self::assertSame([], $action->getContext());
     }
 
     /** @test */
-    public function static_constructors(): void
+    public function should_ping_in_public_channel(): void
     {
         $channel = $this->createMock(ChannelInterface::class);
-        $action = SendMessage::withMessage($channel, 'Hello World!');
+        $channel->method('isPrivate')->willReturn(false);
 
-        self::assertSame('Hello World!', $action->getMessage());
-        self::assertNull($action->getEmbed());
+        $action = new SendMessage($channel, 'Hello World!');
 
-        $action = SendMessage::withEmbed($channel, []);
-
-        self::assertNull($action->getMessage());
-        self::assertSame([], $action->getEmbed());
+        self::assertTrue($action->shouldPingRecipient());
     }
 
     /** @test */
@@ -53,9 +48,44 @@ class SendMessageTest extends TestCase
         $channel = $this->createMock(ChannelInterface::class);
         $channel->method('isPrivate')->willReturn(true);
 
-        $recipient = $this->createMock(UserInterface::class);
+        $action = new SendMessage($channel, 'Hello World!');
 
-        $action = new SendMessage($channel, 'Hello World!', [], $recipient, true);
+        self::assertFalse($action->shouldPingRecipient());
+    }
+
+    /** @test */
+    public function should_not_ping_if_message_came_from_private_channel(): void
+    {
+        $channel = $this->createMock(ChannelInterface::class);
+        $channel->method('isPrivate')->willReturn(true);
+
+        $message = $this->createMock(MessageInterface::class);
+        $message->expects(self::once())->method('getChannel')->willReturn($channel);
+
+        $action = new SendMessage($message, 'Hello World!');
+
+        self::assertFalse($action->shouldPingRecipient());
+    }
+
+    /** @test */
+    public function should_ping_if_message_came_from_public_channel(): void
+    {
+        $channel = $this->createMock(ChannelInterface::class);
+        $channel->method('isPrivate')->willReturn(false);
+
+        $message = $this->createMock(MessageInterface::class);
+        $message->expects(self::once())->method('getChannel')->willReturn($channel);
+
+        $action = new SendMessage($message, 'Hello World!');
+
+        self::assertTrue($action->shouldPingRecipient());
+    }
+
+    /** @test */
+    public function should_not_ping_if_responding_to_user(): void
+    {
+        $user = $this->createMock(UserInterface::class);
+        $action = new SendMessage($user, 'Hello World!');
 
         self::assertFalse($action->shouldPingRecipient());
     }
@@ -64,11 +94,7 @@ class SendMessageTest extends TestCase
     public function should_not_ping_if_forbidden(): void
     {
         $channel = $this->createMock(ChannelInterface::class);
-        $channel->method('isPrivate')->willReturn(false);
-
-        $recipient = $this->createMock(UserInterface::class);
-
-        $action = new SendMessage($channel, 'Hello World!', [], $recipient, false);
+        $action = new SendMessage($channel, 'Hello World!', [], false);
 
         self::assertFalse($action->shouldPingRecipient());
     }
@@ -77,11 +103,7 @@ class SendMessageTest extends TestCase
     public function should_ping_if_set(): void
     {
         $channel = $this->createMock(ChannelInterface::class);
-        $channel->method('isPrivate')->willReturn(false);
-
-        $recipient = $this->createMock(UserInterface::class);
-
-        $action = new SendMessage($channel, 'Hello World!', [], $recipient, true);
+        $action = new SendMessage($channel, 'Hello World!', [], true);
 
         self::assertTrue($action->shouldPingRecipient());
     }

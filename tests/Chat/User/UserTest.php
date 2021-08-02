@@ -13,16 +13,17 @@ class UserTest extends TestCase
     public function acts_as_dto(): void
     {
         $user = new User(
-            '1234567890',
+            $id = '1234567890',
             'Nayleen',
             'Minaire',
             false
         );
 
-        self::assertSame('1234567890', $user->getId());
+        self::assertSame($id, $user->getId());
         self::assertSame('Nayleen', $user->getUsername());
         self::assertSame('Minaire', $user->getNickname());
         self::assertFalse($user->isBot());
+        self::assertSame($id, (string) $user);
     }
 
     /** @test */

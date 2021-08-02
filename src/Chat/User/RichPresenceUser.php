@@ -52,4 +52,9 @@ final class RichPresenceUser implements RichPresenceInterface, UserInterface
     {
         return $this->user->isBot();
     }
+
+    public function __toString(): string
+    {
+        return $this->user->__toString();
+    }
 }

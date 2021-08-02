@@ -100,8 +100,6 @@ final class Definition extends OptionsResolver
     }
 
     /**
-     * @noinspection PhpMissingParamTypeInspection
-     *
      * @param string|string[] $optionNames
      * @return $this
      */
@@ -118,8 +116,6 @@ final class Definition extends OptionsResolver
     }
 
     /**
-     * @noinspection PhpMissingParamTypeInspection
-     *
      * @param string|string[] $optionNames
      * @return $this
      */

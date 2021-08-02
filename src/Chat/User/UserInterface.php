@@ -4,9 +4,10 @@ declare(strict_types = 1);
 
 namespace Bakabot\Chat\User;
 
+use Bakabot\Chat\TargetInterface;
 use Bakabot\Chat\User\Role\RoleInterface;
 
-interface UserInterface
+interface UserInterface extends TargetInterface
 {
     public function addRole(RoleInterface $role): void;
 

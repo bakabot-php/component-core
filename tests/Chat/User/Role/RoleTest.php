@@ -11,8 +11,9 @@ class RoleTest extends TestCase
     /** @test */
     public function acts_as_dto(): void
     {
-        $role = new Role('1234567890');
+        $role = new Role($id = '1234567890');
 
-        self::assertSame('1234567890', $role->getId());
+        self::assertSame($id, $role->getId());
+        self::assertSame($id, (string) $role);
     }
 }

@@ -15,7 +15,7 @@ class IncomingMessageTest extends TestCase
     public function acts_as_dto(): void
     {
         $message = new IncomingMessage(
-            '1234567890',
+            $id = '1234567890',
             'Lorem Ipsum',
             $channel = $this->createMock(ChannelInterface::class),
             $author = $this->createMock(UserInterface::class),
@@ -30,6 +30,7 @@ class IncomingMessageTest extends TestCase
         self::assertSame($creationTime, $message->getCreationTime());
         self::assertNull($message->getEditedTime());
         self::assertFalse($message->wasEdited());
+        self::assertSame($id, (string) $message);
     }
 
     /** @test */

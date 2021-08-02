@@ -31,4 +31,9 @@ final class Channel implements ChannelInterface
     {
         return $this->isPrivate;
     }
+
+    public function __toString(): string
+    {
+        return $this->getId();
+    }
 }

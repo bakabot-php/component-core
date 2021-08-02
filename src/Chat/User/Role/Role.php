@@ -17,4 +17,9 @@ final class Role implements RoleInterface
     {
         return $this->id;
     }
+
+    public function __toString(): string
+    {
+        return $this->getId();
+    }
 }

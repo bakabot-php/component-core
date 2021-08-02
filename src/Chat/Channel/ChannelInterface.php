@@ -4,7 +4,9 @@ declare(strict_types = 1);
 
 namespace Bakabot\Chat\Channel;
 
-interface ChannelInterface
+use Bakabot\Chat\TargetInterface;
+
+interface ChannelInterface extends TargetInterface
 {
     public function getId(): string;
 

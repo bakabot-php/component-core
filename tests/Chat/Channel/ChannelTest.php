@@ -12,13 +12,14 @@ class ChannelTest extends TestCase
     public function acts_as_dto(): void
     {
         $channel = new Channel(
-            '1234567890',
+            $id = '1234567890',
             'some-channel',
             true,
         );
 
-        self::assertSame('1234567890', $channel->getId());
+        self::assertSame($id, $channel->getId());
         self::assertSame('some-channel', $channel->getName());
         self::assertTrue($channel->isPrivate());
+        self::assertSame($id, (string) $channel);
     }
 }

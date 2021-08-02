@@ -13,7 +13,7 @@ class RichPresenceUserTest extends TestCase
     public function acts_as_dto(): void
     {
         $user = new User(
-            '1234567890',
+            $id = '1234567890',
             'Nayleen',
             'Minaire',
             false
@@ -21,11 +21,12 @@ class RichPresenceUserTest extends TestCase
 
         $richPresenceUser = new RichPresenceUser($user, $imageUrl = 'some-image-url');
 
-        self::assertSame('1234567890', $richPresenceUser->getId());
+        self::assertSame($id, $richPresenceUser->getId());
         self::assertSame('Nayleen', $richPresenceUser->getUsername());
         self::assertSame('Minaire', $richPresenceUser->getNickname());
         self::assertFalse($richPresenceUser->isBot());
         self::assertSame($imageUrl, $richPresenceUser->getDisplayImageUrl());
+        self::assertSame($id, (string) $richPresenceUser);
     }
 
     /** @test */

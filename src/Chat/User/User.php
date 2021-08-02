@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Bakabot\Chat\User;
 
-use Bakabot\Chat\User\Role\Role;
 use Bakabot\Chat\User\Role\RoleInterface;
 
 final class User implements UserInterface
@@ -63,5 +62,10 @@ final class User implements UserInterface
     public function isBot(): bool
     {
         return $this->isBot;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getId();
     }
 }

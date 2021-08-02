@@ -4,78 +4,37 @@ declare(strict_types = 1);
 
 namespace Bakabot\Action;
 
-use Bakabot\Chat\Channel\ChannelInterface;
-use Bakabot\Chat\User\UserInterface;
+use Bakabot\Chat\TargetInterface;
 use LogicException;
 
-final class SendMessage implements SendMessageInterface
+final class SendMessage extends AbstractAction implements SendMessageInterface
 {
-    use TriggerMessageTrait;
-
-    private ChannelInterface $channel;
-    private ?array $embed = null;
-    private bool $mentionRecipient;
-    private ?string $message = null;
-    private ?UserInterface $recipient = null;
+    private array $context;
+    private ?string $message;
 
     public function __construct(
-        ChannelInterface $channel,
-        ?string $message,
-        ?array $embed,
-        ?UserInterface $recipient = null,
-        bool $mentionRecipient = false
+        TargetInterface $target,
+        ?string $message = null,
+        array $context = [],
+        ?bool $pingRecipient = null
     ) {
-        if ($message === null && $embed === null) {
-            throw new LogicException('You need to set either a message, an embed, or both.');
+        if ($message === null && count($context) === 0) {
+            throw new LogicException();
         }
 
-        $this->channel = $channel;
-        $this->embed = $embed;
+        parent::__construct($target, $pingRecipient);
+
+        $this->context = $context;
         $this->message = $message;
-        $this->recipient = $recipient;
-        $this->mentionRecipient = $mentionRecipient && ($this->recipient && !$this->channel->isPrivate());
     }
 
-    public static function withEmbed(
-        ChannelInterface $channel,
-        array $embed,
-        ?UserInterface $recipient = null,
-        bool $mentionRecipient = false
-    ): self {
-        return new self($channel, null, $embed, $recipient, $mentionRecipient);
-    }
-
-    public static function withMessage(
-        ChannelInterface $channel,
-        string $message,
-        ?UserInterface $recipient = null,
-        bool $mentionRecipient = false
-    ): self {
-        return new self($channel, $message, null, $recipient, $mentionRecipient);
-    }
-
-    public function getChannel(): ChannelInterface
+    public function getContext(): array
     {
-        return $this->channel;
-    }
-
-    public function getEmbed(): ?array
-    {
-        return $this->embed;
+        return $this->context;
     }
 
     public function getMessage(): ?string
     {
         return $this->message;
-    }
-
-    public function getRecipient(): ?UserInterface
-    {
-        return $this->recipient;
-    }
-
-    public function shouldMentionRecipient(): bool
-    {
-        return $this->mentionRecipient;
     }
 }

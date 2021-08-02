@@ -67,4 +67,9 @@ final class IncomingMessage implements MessageInterface
     {
         return $this->editedTime !== null;
     }
+
+    public function __toString(): string
+    {
+        return $this->getId();
+    }
 }

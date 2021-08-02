@@ -96,7 +96,7 @@ class DefinitionTest extends TestCase
             'greedy required first argument' => [
                 'expression' => 'names*',
                 'parsed_arguments' => ['Nayleen', 'Minaire', 'Naihla'],
-                'raw_arguments' => 'Nayleen Minaire Shinayna',
+                'raw_arguments' => 'Nayleen Minaire Naihla',
                 'expected_data' => [
                     'names' => ['Nayleen', 'Minaire', 'Naihla'],
                 ],

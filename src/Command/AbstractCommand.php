@@ -14,7 +14,9 @@ abstract class AbstractCommand implements CommandInterface
     private ?Definition $argumentDefinition = null;
     /** @var array<string, string> */
     private array $arguments = [];
-    protected ?Payload $payload = null;
+    private ?Payload $payload = null;
+    /** @var string[] */
+    private array $supportedEnvironments;
 
     protected function createArgumentDefinition(): Definition
     {
@@ -35,9 +37,7 @@ abstract class AbstractCommand implements CommandInterface
         return $this->argumentDefinition;
     }
 
-    /**
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     final protected function getArguments(): array
     {
         return $this->arguments;
@@ -45,9 +45,14 @@ abstract class AbstractCommand implements CommandInterface
 
     final protected function getCommandPrefix(): string
     {
+        return $this->getPayload()->getCommandPrefix();
+    }
+
+    final protected function getPayload(): Payload
+    {
         assert($this->payload !== null);
 
-        return $this->payload->getCommandPrefix();
+        return $this->payload;
     }
 
     final public function bind(Payload $payload): void
@@ -76,11 +81,22 @@ abstract class AbstractCommand implements CommandInterface
         return (string) AttributeValueGetter::getAttributeValue($this, Cmd\Name::class);
     }
 
-    /**
-     * @return array<int, string>
-     */
+    /** @return string[] */
     public function getSupportedEnvironments(): array
     {
-        return array_values((array) AttributeValueGetter::getAttributeValue($this, Cmd\SupportedEnvironments::class));
+        if (!isset($this->supportedEnvironments)) {
+            $supportedEnvironments = array_values(
+                (array) AttributeValueGetter::getAttributeValue($this, Cmd\SupportedEnvironment::class, null)
+            );
+
+            $this->supportedEnvironments = array_flip(array_flip($supportedEnvironments));
+        }
+
+        return $this->supportedEnvironments;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getName();
     }
 }
