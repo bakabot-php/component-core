@@ -31,15 +31,17 @@ final class HelpCommand extends AbstractCommand
         $this->commands = $commands;
     }
 
-    private function trimPrefix(?string $commandName): ?string
+    private function getNormalizedCommandName(): ?string
     {
+        $commandName = $this->getArgument('command');
+
         if ($commandName === null) {
             return null;
         }
 
         $commandName = ltrim($commandName, $this->getCommandPrefix());
 
-        return $commandName === '' ? null : $commandName;
+        return $commandName === '' ? null : strtolower($commandName);
     }
 
     private function createCommandHelp(CommandInterface $command): ActionInterface
@@ -72,7 +74,7 @@ final class HelpCommand extends AbstractCommand
 
     public function run(): ActionInterface
     {
-        $requestedCommand = $this->trimPrefix($this->getArgument('command'));
+        $requestedCommand = $this->getNormalizedCommandName();
 
         if ($requestedCommand === null) {
             return self::createCommandOverview($this->commands, $this->getPayload());

@@ -12,6 +12,8 @@ final class Registry implements IteratorAggregate
 {
     private Collection $commands;
 
+    private const DELIMITER = ':';
+
     public function __construct()
     {
         $this->commands = new Collection();
@@ -22,7 +24,10 @@ final class Registry implements IteratorAggregate
         $name = $command->getName();
 
         foreach ($command->getSupportedEnvironments() as $environment) {
-            $this->commands->push("$environment:$name", $command);
+            $this->commands->push(
+                sprintf('%s%s%s', $environment, self::DELIMITER, $name),
+                $command
+            );
         }
     }
 
@@ -31,7 +36,7 @@ final class Registry implements IteratorAggregate
         $copy = new self();
 
         foreach ($this->commands as $key => $command) {
-            [$supportedEnvironment, $name] = explode(':', $key);
+            [$supportedEnvironment, $name] = explode(self::DELIMITER, $key);
 
             if ($supportedEnvironment === $environment) {
                 $copy->commands->push($name, $command);

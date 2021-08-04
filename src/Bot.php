@@ -4,14 +4,15 @@ declare(strict_types = 1);
 
 namespace Bakabot;
 
-use Bakabot\Component\Bootstrapper;
+use Amp\Loop;
 use Bakabot\Component\Collection as ComponentCollection;
 use Bakabot\Component\ComponentInterface;
+use Bakabot\Component\Core\Amp\Loop\RebootException;
 use Psr\Container\ContainerInterface;
 
 final class Bot
 {
-    private Bootstrapper $bootstrapper;
+    private Kernel $kernel;
 
     /**
      * @param ComponentCollection|ComponentInterface[] $components
@@ -19,20 +20,27 @@ final class Bot
      */
     public function __construct(ComponentCollection|array $components, ?ContainerInterface $container = null)
     {
-        $this->bootstrapper = new Bootstrapper($components, $container);
+        $this->kernel = new Kernel($components, $container);
     }
 
     public function getContainer(): ContainerInterface
     {
-        return $this->bootstrapper->getContainer();
+        return $this->kernel->getContainer();
     }
 
-    public function run(): void
+    public function run(?callable $callback = null): void
     {
-        $container = $this->getContainer();
+        reboot:
+        $this->kernel->boot();
 
-        // start the loop, blahblah
+        try {
+            Loop::run($callback);
+        } catch (RebootException) {
+            $this->kernel->shutdown();
+            goto reboot;
+        }
 
-        unset($this->bootstrapper);
+        $this->kernel->shutdown();
+        unset($this->kernel);
     }
 }

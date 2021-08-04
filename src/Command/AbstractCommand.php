@@ -16,7 +16,7 @@ abstract class AbstractCommand implements CommandInterface
     private array $arguments = [];
     private ?Payload $payload = null;
     /** @var string[] */
-    private array $supportedEnvironments;
+    private ?array $supportedEnvironments = null;
 
     protected function createArgumentDefinition(): Definition
     {
@@ -84,7 +84,7 @@ abstract class AbstractCommand implements CommandInterface
     /** @return string[] */
     public function getSupportedEnvironments(): array
     {
-        if (!isset($this->supportedEnvironments)) {
+        if ($this->supportedEnvironments === null) {
             $supportedEnvironments = array_values(
                 (array) AttributeValueGetter::getAttributeValue($this, Cmd\SupportedEnvironment::class, null)
             );
