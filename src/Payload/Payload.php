@@ -11,40 +11,27 @@ use Bakabot\EnvironmentInterface;
 
 final class Payload implements PayloadInterface
 {
-    private ?array $allowedCommands;
     private ChannelInterface $channel;
     private EnvironmentInterface $environment;
     private MessageInterface $message;
     private ?ServerInterface $server;
 
+    /**
+     * @param EnvironmentInterface $environment
+     * @param ChannelInterface $channel
+     * @param MessageInterface $message
+     * @param ServerInterface|null $server
+     */
     public function __construct(
         EnvironmentInterface $environment,
         ChannelInterface $channel,
         MessageInterface $message,
-        ?ServerInterface $server,
-        ?array $allowedCommands = null
+        ?ServerInterface $server
     ) {
-        $this->allowedCommands = $allowedCommands;
         $this->channel = $channel;
         $this->environment = $environment;
         $this->message = $message;
         $this->server = $server;
-    }
-
-    public static function withAllowedCommands(PayloadInterface $payload, ?array $allowedCommands): Payload
-    {
-        return new Payload(
-            $payload->getEnvironment(),
-            $payload->getChannel(),
-            $payload->getMessage(),
-            $payload->getServer(),
-            $allowedCommands
-        );
-    }
-
-    public function getAllowedCommands(): ?array
-    {
-        return $this->allowedCommands;
     }
 
     public function getChannel(): ChannelInterface

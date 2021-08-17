@@ -27,7 +27,6 @@ class PayloadTest extends TestCase
         self::assertSame($channel, $payload->getChannel());
         self::assertSame($message, $payload->getMessage());
         self::assertSame($server, $payload->getServer());
-        self::assertNull($payload->getAllowedCommands());
     }
 
     /** @test */
@@ -38,15 +37,11 @@ class PayloadTest extends TestCase
             $channel = $this->createMock(ChannelInterface::class),
             $message = $this->createMock(MessageInterface::class),
             $server = $this->createMock(ServerInterface::class),
-            null
         );
 
-        $decoratedPayload = Payload::withAllowedCommands($payload, ['my_command']);
-
-        self::assertSame($environment, $decoratedPayload->getEnvironment());
-        self::assertSame($channel, $decoratedPayload->getChannel());
-        self::assertSame($message, $decoratedPayload->getMessage());
-        self::assertSame($server, $decoratedPayload->getServer());
-        self::assertSame(['my_command'], $decoratedPayload->getAllowedCommands());
+        self::assertSame($environment, $payload->getEnvironment());
+        self::assertSame($channel, $payload->getChannel());
+        self::assertSame($message, $payload->getMessage());
+        self::assertSame($server, $payload->getServer());
     }
 }

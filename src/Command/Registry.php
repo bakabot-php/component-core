@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Bakabot\Command;
 
+use Bakabot\Chat\Server\Settings\AllowedCommands;
 use IteratorAggregate;
 use IteratorIterator;
 use Traversable;
@@ -47,11 +48,15 @@ final class Registry implements IteratorAggregate
     }
 
     /**
-     * @param string[] $names
+     * @param AllowedCommands|string[] $names
      * @return $this
      */
-    public function filterByNames(array $names): self
+    public function filterByNames(AllowedCommands|array $names): self
     {
+        if ($names instanceof AllowedCommands) {
+            $names = $names->toArray();
+        }
+
         $copy = new self();
 
         foreach ($this->commands as $name => $command) {

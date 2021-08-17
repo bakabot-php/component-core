@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Bakabot\Command;
 
+use Amp\Promise;
+use Amp\Success;
 use Bakabot\Action\DoNothing;
 use Bakabot\Command\Attribute\ArgumentExpression;
 use Bakabot\Command\Attribute\SupportedEnvironment;
@@ -20,9 +22,9 @@ class TestCommand extends AbstractCommand
         return $this->getArguments();
     }
 
-    public function run(): DoNothing
+    public function run(): Promise
     {
-        return new DoNothing();
+        return new Success(new DoNothing());
     }
 }
 

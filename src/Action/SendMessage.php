@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Bakabot\Action;
 
 use Bakabot\Chat\TargetInterface;
-use LogicException;
 
 final class SendMessage extends AbstractAction implements SendMessageInterface
 {
@@ -18,9 +17,7 @@ final class SendMessage extends AbstractAction implements SendMessageInterface
         array $context = [],
         ?bool $pingRecipient = null
     ) {
-        if ($message === null && count($context) === 0) {
-            throw new LogicException();
-        }
+        assert($message !== null || count($context) === 0);
 
         parent::__construct($target, $pingRecipient);
 

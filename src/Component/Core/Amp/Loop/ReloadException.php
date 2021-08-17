@@ -6,7 +6,7 @@ namespace Bakabot\Component\Core\Amp\Loop;
 
 use RuntimeException;
 
-final class RebootException extends RuntimeException
+final class ReloadException extends RuntimeException
 {
 
 }

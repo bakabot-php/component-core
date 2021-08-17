@@ -11,8 +11,6 @@ use Bakabot\EnvironmentInterface;
 
 interface PayloadInterface
 {
-    public function getAllowedCommands(): ?array;
-
     public function getChannel(): ChannelInterface;
 
     public function getEnvironment(): EnvironmentInterface;

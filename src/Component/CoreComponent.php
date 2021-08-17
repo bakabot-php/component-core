@@ -7,29 +7,67 @@ namespace Bakabot\Component;
 use Amp\Loop;
 use Amp\Loop\Driver;
 use Amp\ReactAdapter\ReactAdapter;
+use Bakabot\Chat\Server\Language\FallbackLanguageSource;
+use Bakabot\Chat\Server\Language\Language;
+use Bakabot\Chat\Server\Language\LanguageSourceInterface;
+use Bakabot\Chat\Server\Language\EnvironmentLanguageSource;
+use Bakabot\Chat\Server\Settings\ServerSettingsSourceInterface;
+use Bakabot\Chat\Server\Settings\JsonDatabaseSource;
+use Bakabot\Command\Prefix\Prefix;
+use Bakabot\Command\Prefix\PrefixSourceInterface;
 use Bakabot\Command\Registry;
-use Bakabot\Component\Core\Amp\Loop\RebootException;
+use Bakabot\Component\Attribute\RegistersParameter;
+use Bakabot\Component\Attribute\RegistersService;
 use Bakabot\Component\Core\Logger\LoggerFactory;
+use Bakabot\Kernel;
+use Bakabot\KernelInterface;
+use Bakabot\Payload\Processor\Firewall\Firewall;
+use Bakabot\Payload\Processor\Firewall\Rule\IgnoreBots;
+use Bakabot\Payload\Processor\ProcessorChain;
+use Bakabot\Payload\Processor\ProcessorFactory;
+use Locale;
 use Monolog\ErrorHandler;
 use Monolog\Logger;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
+use Psr\Log\Test\TestLogger;
 use React\EventLoop\LoopInterface;
-
 use function DI\env;
 use function DI\get;
 use function DI\string;
 
-final class CoreComponent extends AbstractComponent implements DependentComponentInterface
+#[RegistersParameter('bakabot.debug', 'bool', "e:getenv('APP_DEBUG') ?? false", 'Whether to run the bot in debugging mode')]
+#[RegistersParameter('bakabot.default_language', 'string', "e:Locale::getPrimaryLanguage(Locale::getDefault())", 'Default language assumed for servers')]
+#[RegistersParameter('bakabot.default_prefix', 'string', '!', 'Default prefix used for commands')]
+#[RegistersParameter('bakabot.dirs.base', 'string', '/app', 'Base directory')]
+#[RegistersParameter('bakabot.dirs.cache', 'string', '/app/var/cache', 'Cache directory; Used for e.g. compiled DI containers')]
+#[RegistersParameter('bakabot.dirs.var', 'string', '/app/var', 'Variable data; The bot *should* not depend on this directory existing')]
+#[RegistersParameter('bakabot.env', 'string', "e:getenv('APP_ENV') ?? \"prod\"", 'Name of the environment')]
+#[RegistersParameter('bakabot.name', 'string', "e:getenv('APP_NAME') ?? \"Bakabot\"", 'Name used for the bot')]
+#[RegistersParameter('bakabot.logs.default.date_format', 'string', 'Y-m-d H:i:s.u', 'Date format used for logs')]
+#[RegistersParameter('bakabot.logs.default.level', 'string', "e:getenv('APP_DEBUG') ? LogLevel::DEBUG : LogLevel::INFO", 'Level used for logs')]
+#[RegistersParameter('bakabot.logs.default.line_format', 'string', "[%datetime%] [%channel%] %message% %context% %extra%\\n", 'Line format used for logs')]
+#[RegistersService('bakabot.logs.default', 'Logs to stdout', LoggerInterface::class)]
+#[RegistersService('bakabot.logs.error', 'Logs to stderr', LoggerInterface::class)]
+#[RegistersService(Firewall::class)]
+#[RegistersService(Logger::class, 'Main application logger', LoggerInterface::class)]
+#[RegistersService(LoggerInterface::class, 'Main application logger')]
+#[RegistersService(ProcessorChain::class)]
+#[RegistersService(Registry::class)]
+final class CoreComponent extends AbstractComponent
 {
     public function boot(ContainerInterface $container): void
     {
         // register the global error handling logger
-        ErrorHandler::register($container->get('bakabot.logs.error'));
+        /** @var LoggerInterface $logger */
+        $logger = $container->get('bakabot.logs.error');
+        ErrorHandler::register($logger);
 
         // register the default loop driver
-        Loop::set($container->get(Driver::class));
+        /** @var Driver $driver */
+        $driver = $container->get(Driver::class);
+        Loop::set($driver);
     }
 
     public function shutdown(ContainerInterface $container): void
@@ -40,42 +78,30 @@ final class CoreComponent extends AbstractComponent implements DependentComponen
     protected function getParameters(): array
     {
         return [
-            // globals
-            'bakabot.debug' => env('APP_DEBUG', false),
+            // core component specific
+            'bakabot.debug' => static fn () => (bool) getenv('APP_DEBUG'),
+            'bakabot.default_language' => 'en',
             'bakabot.default_prefix' => '!',
             'bakabot.dirs.base' => env('APP_DIR', '/app'),
+            'bakabot.dirs.var' => string('{bakabot.dirs.base}/var/{bakabot.env}'),
             'bakabot.dirs.cache' => string('{bakabot.dirs.var}/cache'),
-            'bakabot.dirs.logs' => string('{bakabot.dirs.var}/log'),
-            'bakabot.dirs.var' => string('{bakabot.dirs.base}/var'),
             'bakabot.env' => env('APP_ENV', 'prod'),
             'bakabot.name' => env('APP_NAME', 'Bakabot'),
+            'bakabot.name_lc' => static function (ContainerInterface $c) {
+                /** @var string $name */
+                $name = $c->get('bakabot.name');
 
-            // core component specific
-
-            // database component specific
-            'bakabot.db.config' => [
-                'url' => env('DB_CONNECTION_DEFAULT_URL', string('sqlite://{bakabot.dirs.var}/database.sqlite')),
-            ],
+                return mb_strtolower($name);
+            },
 
             // logging
+            'bakabot.logs.default.date_format' => 'Y-m-d H:i:s.u',
             'bakabot.logs.default.level' => static function (ContainerInterface $c) {
                 return $c->get('bakabot.debug')
                     ? LogLevel::DEBUG
                     : LogLevel::INFO;
             },
-            'bakabot.logs.default.max_files' => 5,
-
-            'bakabot.logs.file.date_format' => 'Y-m-d H:i:s.u',
-            'bakabot.logs.file.level' => get('bakabot.logs.default.level'),
-            'bakabot.logs.file.line_format' => static function (ContainerInterface $c) {
-                return $c->get('bakabot.debug')
-                    ? "[%datetime%] [%channel%] %message% %context% %extra%\n"
-                    : "%message% %context% %extra%\n";
-            },
-
-            'bakabot.logs.stdout.date_format' => 'H:i:s.u',
-            'bakabot.logs.stdout.level' => get('bakabot.logs.default.level'),
-            'bakabot.logs.stdout.line_format' => "[%datetime%] %message% %context% %extra%\n",
+            'bakabot.logs.default.line_format' => "[%datetime%] [%channel%] %message% %context% %extra%\n",
         ];
     }
 
@@ -83,22 +109,73 @@ final class CoreComponent extends AbstractComponent implements DependentComponen
     {
         return [
             // core component specific
+            Firewall::class => static function (ContainerInterface $c) {
+                /** @var LoggerInterface $logger */
+                $logger = $c->get(LoggerInterface::class);
+
+                $firewall = new Firewall($logger);
+                $firewall->addRule(new IgnoreBots());
+
+                return $firewall;
+            },
+            KernelInterface::class => get(Kernel::class),
+            LanguageSourceInterface::class => static function (ContainerInterface $c) {
+                /** @var LanguageSourceInterface $main */
+                $main = $c->get(EnvironmentLanguageSource::class);
+                /** @var string $defaultLanguage */
+                $defaultLanguage = $c->get('bakabot.default_language');
+
+                return new FallbackLanguageSource($main, new Language($defaultLanguage));
+            },
+            PrefixSourceInterface::class => static function (ContainerInterface $c) {
+                /** @var string $defaultPrefix */
+                $defaultPrefix = $c->get('bakabot.default_prefix');
+
+                return new Prefix($defaultPrefix);
+            },
+            ProcessorChain::class => static function (ContainerInterface $c) {
+                /** @var ProcessorFactory $factory */
+                $factory = $c->get(ProcessorFactory::class);
+
+                $chain = new ProcessorChain();
+
+                /** @var Firewall $firewall */
+                $firewall = $c->get(Firewall::class);
+                $chain->push($firewall);
+                $chain->push($factory->createCommandParser());
+                $chain->push($factory->createCommandRunner());
+
+                return $chain;
+            },
+            ProcessorFactory::class => static function (ContainerInterface $c) {
+                /** @var Registry $registry */
+                $registry = $c->get(Registry::class);
+                /** @var ServerSettingsSourceInterface $serverSettingsSource */
+                $serverSettingsSource = $c->get(ServerSettingsSourceInterface::class);
+
+                return new ProcessorFactory($registry, $serverSettingsSource);
+            },
             Registry::class => static fn() => new Registry(),
+            ServerSettingsSourceInterface::class => static function (ContainerInterface $c) {
+                /** @var string $basePath */
+                $basePath = $c->get('bakabot.dirs.var');
+                /** @var LanguageSourceInterface $languageSource */
+                $languageSource = $c->get(LanguageSourceInterface::class);
+                /** @var PrefixSourceInterface $prefixSource */
+                $prefixSource = $c->get(PrefixSourceInterface::class);
+
+                return new JsonDatabaseSource($basePath, $languageSource, $prefixSource);
+            },
 
             // event loop
             Driver::class => static function (ContainerInterface $c) {
                 $driver = (new Loop\DriverFactory())->create();
+                /** @var Kernel $kernel */
+                $kernel = $c->get(KernelInterface::class);
 
-                $stopHandler = static function () use ($driver): void {
-                    $driver->stop();
-                };
-
-                $driver->onSignal(SIGHUP, static function () use ($driver): void {
-                    $driver->stop();
-                    throw new RebootException();
-                });
-                $driver->onSignal(SIGINT, $stopHandler);
-                $driver->onSignal(SIGTERM, $stopHandler);
+                $driver->onSignal(SIGHUP, $kernel->reload($driver));
+                $driver->onSignal(SIGINT, $kernel->stop($driver));
+                $driver->onSignal(SIGTERM, $kernel->stop($driver));
 
                 return $driver;
             },
@@ -106,58 +183,54 @@ final class CoreComponent extends AbstractComponent implements DependentComponen
             LoopInterface::class => static fn() => ReactAdapter::get(),
 
             // logging
-            Logger::class => get('bakabot.logs.stdout'),
+            Logger::class => get('bakabot.logs.default'),
             LoggerFactory::class => static function (ContainerInterface $c) {
-                return new LoggerFactory(
-                    $c->get('bakabot.dirs.logs'),
-                    $c->get('bakabot.logs.default.level'),
-                    $c->get('bakabot.logs.default.max_files')
-                );
+                /** @var string $defaultLevel */
+                $defaultLevel = $c->get('bakabot.logs.default.level');
+
+                return new LoggerFactory($defaultLevel);
             },
             LoggerInterface::class => get(Logger::class),
+
+            'bakabot.logs.default' => static function (ContainerInterface $c) {
+                /** @var string $env */
+                $env = $c->get('bakabot.env');
+                if ($env === 'test') {
+                    return new TestLogger();
+                }
+
+                /** @var LoggerFactory $loggerFactory */
+                $loggerFactory = $c->get(LoggerFactory::class);
+
+                /** @var string $lineFormat */
+                $lineFormat = $c->get('bakabot.logs.default.line_format');
+                /** @var string $dateFormat */
+                $dateFormat = $c->get('bakabot.logs.default.date_format');
+
+                $loggerFactory->addStreamHandler(STDOUT, $lineFormat, $dateFormat);
+
+                /** @var string $lowerCasedName */
+                $lowerCasedName = $c->get('bakabot.name_lc');
+
+                return $loggerFactory->create($lowerCasedName);
+            },
 
             'bakabot.logs.error' => static function (ContainerInterface $c) {
                 /** @var LoggerFactory $loggerFactory */
                 $loggerFactory = $c->get(LoggerFactory::class);
-                $loggerFactory->addFileHandler(
-                    'error.log',
-                    $c->get('bakabot.logs.file.line_format'),
-                    $c->get('bakabot.logs.file.date_format'),
-                    LogLevel::ERROR,
-                    0
-                );
 
-                if ($c->get('bakabot.debug')) {
-                    $loggerFactory->addStreamHandler(
-                        STDERR,
-                        $c->get('bakabot.logs.stdout.line_format'),
-                        $c->get('bakabot.logs.stdout.date_format'),
-                        LogLevel::ERROR
-                    );
-                }
+                /** @var string $lineFormat */
+                $lineFormat = $c->get('bakabot.logs.default.line_format');
+                /** @var string $dateFormat */
+                $dateFormat = $c->get('bakabot.logs.default.date_format');
 
-                return $loggerFactory->create($c->get('bakabot.name'));
+                $loggerFactory->addStreamHandler(STDERR, $lineFormat, $dateFormat, LogLevel::EMERGENCY);
+
+                /** @var string $lowerCasedName */
+                $lowerCasedName = $c->get('bakabot.name_lc');
+
+                return $loggerFactory->create($lowerCasedName);
             },
-
-            'bakabot.logs.stdout' => static function (ContainerInterface $c) {
-                /** @var LoggerFactory $loggerFactory */
-                $loggerFactory = $c->get(LoggerFactory::class);
-                $loggerFactory->addStreamHandler(
-                    STDOUT,
-                    $c->get('bakabot.logs.stdout.line_format'),
-                    $c->get('bakabot.logs.stdout.date_format'),
-                    $c->get('bakabot.logs.stdout.level')
-                );
-
-                return $loggerFactory->create($c->get('bakabot.name'));
-            },
-        ];
-    }
-
-    public function getComponentDependencies(): array
-    {
-        return [
-            DatabaseComponent::class,
         ];
     }
 }

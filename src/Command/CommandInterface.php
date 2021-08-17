@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Bakabot\Command;
 
+use Amp\Promise;
 use Bakabot\Action\ActionInterface;
 use Stringable;
 
@@ -22,5 +23,6 @@ interface CommandInterface extends Stringable
      */
     public function getSupportedEnvironments(): array;
 
-    public function run(): ActionInterface;
+    /** @return Promise<ActionInterface> */
+    public function run(): Promise;
 }

@@ -6,20 +6,10 @@ namespace Bakabot\Action;
 
 use Bakabot\Chat\Channel\ChannelInterface;
 use Bakabot\Chat\Message\MessageInterface;
-use LogicException;
 use PHPUnit\Framework\TestCase;
 
 class TriggerMessageTraitTest extends TestCase
 {
-    /** @test */
-    public function throws_if_trigger_message_is_not_set(): void
-    {
-        $this->expectException(LogicException::class);
-
-        $action = new SendMessage($this->createMock(ChannelInterface::class), 'Hello World!');
-        $action->getTriggerMessage();
-    }
-
     /** @test */
     public function can_fetch_previously_set_trigger_message(): void
     {

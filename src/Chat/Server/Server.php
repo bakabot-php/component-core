@@ -7,9 +7,9 @@ namespace Bakabot\Chat\Server;
 final class Server implements ServerInterface
 {
     private string $id;
-    private string $name;
+    private ?string $name;
 
-    public function __construct(string $id, string $name)
+    public function __construct(string $id, ?string $name)
     {
         $this->id = $id;
         $this->name = $name;
@@ -20,7 +20,7 @@ final class Server implements ServerInterface
         return $this->id;
     }
 
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->name;
     }

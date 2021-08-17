@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Bakabot\Command;
 
+use Amp\Promise;
 use Bakabot\Action\SendTemplatedMessage;
 use Bakabot\Chat\Channel\ChannelInterface;
 use Bakabot\Payload\PayloadInterface;
@@ -25,9 +26,8 @@ class HelpCommandTest extends TestCase
     /** @test */
     public function can_produce_help_overview_without_instantiation(): void
     {
-        $action = HelpCommand::createCommandOverview(new Collection(), $this->createTestPayload());
+        $action = Promise\wait(HelpCommand::createCommandOverview(new Collection(), $this->createTestPayload()));
 
-        self::assertInstanceOf(SendTemplatedMessage::class, $action);
         self::assertInstanceOf(ChannelInterface::class, $action->getTarget());
         self::assertSame(HelpCommand::TEMPLATE_HELP_OVERVIEW, $action->getMessage());
     }
@@ -38,7 +38,7 @@ class HelpCommandTest extends TestCase
         $command = new HelpCommand(new Collection());
         $command->bind($this->createTestPayload());
 
-        $action = $command->run();
+        $action = Promise\wait($command->run());
 
         self::assertInstanceOf(SendTemplatedMessage::class, $action);
         self::assertInstanceOf(ChannelInterface::class, $action->getTarget());
@@ -52,7 +52,7 @@ class HelpCommandTest extends TestCase
         $command = new HelpCommand(new Collection());
         $command->bind($this->createTestPayload('help'));
 
-        $action = $command->run();
+        $action = Promise\wait($command->run());
 
         self::assertInstanceOf(SendTemplatedMessage::class, $action);
         self::assertInstanceOf(ChannelInterface::class, $action->getTarget());
@@ -68,7 +68,7 @@ class HelpCommandTest extends TestCase
         $command = new HelpCommand(new Collection());
         $command->bind($this->createTestPayload($name));
 
-        $action = $command->run();
+        $action = Promise\wait($command->run());
 
         self::assertInstanceOf(SendTemplatedMessage::class, $action);
         self::assertInstanceOf(ChannelInterface::class, $action->getTarget());
@@ -92,7 +92,7 @@ class HelpCommandTest extends TestCase
         $helpCommand = new HelpCommand($commands);
         $helpCommand->bind($this->createTestPayload($name));
 
-        $action = $helpCommand->run();
+        $action = Promise\wait($helpCommand->run());
 
         self::assertInstanceOf(SendTemplatedMessage::class, $action);
         self::assertInstanceOf(ChannelInterface::class, $action->getTarget());

@@ -25,7 +25,7 @@ trait TriggerMessageTrait
 
     final public function getTriggerMessage(): MessageInterface
     {
-        assert($this->triggerMessage !== null, new LogicException());
+        assert($this->triggerMessage !== null);
 
         return $this->triggerMessage;
     }

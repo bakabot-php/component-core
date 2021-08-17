@@ -9,3 +9,4 @@ docker-compose.yaml export-ignore
 Makefile export-ignore
 phpunit.xml export-ignore
 psalm.xml export-ignore
+README.md.dist export-ignore

@@ -7,7 +7,7 @@ namespace Bakabot;
 use Bakabot\Chat\User\UserInterface;
 use Bakabot\Payload\PayloadInterface;
 
-interface AdapterInterface
+interface DriverInterface
 {
     public static function create(UserInterface $activeUser): self;
 

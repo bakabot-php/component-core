@@ -4,12 +4,16 @@
     "license": "MIT",
     "require": {
         "php": ">=8.0",
+        "ext-intl": "*",
         "ext-pcntl": "*",
         "amphp/amp": "^2.6",
+        "amphp/log": "^1",
         "amphp/react-adapter": "^2.1",
+        "amphp/sync": "^1.4",
         "bakabot/attribute": "^2",
         "bakabot/component": "dev-main",
-        "bakabot/component-database": "dev-main",
+        "enqueue/enqueue": "^0.10.9",
+        "evenement/evenement": "^3.0",
         "monolog/monolog": "^2.3",
         "php-di/php-di": "^6",
         "spatie/emoji": "^2.2",
@@ -22,6 +26,13 @@
         "bakabot/development": "^2.0",
         "roave/security-advisories": "dev-latest"
     },
+    "config": {
+        "lock": false,
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true
+    },
     "autoload": {
         "psr-4": {
             "Bakabot\\": "src/"
@@ -31,12 +42,5 @@
         "psr-4": {
             "Bakabot\\": "tests/"
         }
-    },
-    "config": {
-        "lock": false,
-        "preferred-install": {
-            "*": "dist"
-        },
-        "sort-packages": true
     }
 }

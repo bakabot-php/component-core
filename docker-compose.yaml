@@ -7,6 +7,6 @@ services:
             - $PWD:/app
 
     php:
-        image: bakabot/php-dev
+        image: bakabot/php
         volumes:
             - $PWD:/app

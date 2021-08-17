@@ -4,6 +4,9 @@ declare(strict_types = 1);
 
 namespace Bakabot\Command;
 
+use Amp\Deferred;
+use Amp\Promise;
+use Amp\Success;
 use Bakabot\Action\ActionInterface;
 use Bakabot\Action\SendTemplatedMessage;
 use Bakabot\Command\Attribute\ArgumentExpression;
@@ -33,18 +36,20 @@ final class HelpCommand extends AbstractCommand
 
     private function getNormalizedCommandName(): ?string
     {
+        /** @var string|null $commandName */
         $commandName = $this->getArgument('command');
 
         if ($commandName === null) {
             return null;
         }
 
+        /** @var string $commandName */
         $commandName = ltrim($commandName, $this->getCommandPrefix());
 
         return $commandName === '' ? null : strtolower($commandName);
     }
 
-    private function createCommandHelp(CommandInterface $command): ActionInterface
+    private function createCommandHelp(CommandInterface $command): SendTemplatedMessage
     {
         return new SendTemplatedMessage(
             $this->getPayload()->getChannel(),
@@ -56,40 +61,53 @@ final class HelpCommand extends AbstractCommand
         );
     }
 
+    /**
+     * @param Collection $commands
+     * @param Payload $payload
+     * @param string|null $requestedCommand
+     * @return Promise<SendTemplatedMessage>
+     */
     public static function createCommandOverview(
         Collection $commands,
         Payload $payload,
         ?string $requestedCommand = null
-    ): ActionInterface {
-        return new SendTemplatedMessage(
-            $payload->getChannel(),
-            self::TEMPLATE_HELP_OVERVIEW,
-            [
-                'commands' => $commands,
-                'prefix' => $payload->getCommandPrefix(),
-                'requested_command' => $requestedCommand,
-            ]
+    ): Promise {
+        return new Success(
+            new SendTemplatedMessage(
+                $payload->getChannel(),
+                self::TEMPLATE_HELP_OVERVIEW,
+                [
+                    'commands' => $commands,
+                    'prefix' => $payload->getCommandPrefix(),
+                    'requested_command' => $requestedCommand,
+                ]
+            )
         );
     }
 
-    public function run(): ActionInterface
+    /** @return Promise<ActionInterface> */
+    public function run(): Promise
     {
         $requestedCommand = $this->getNormalizedCommandName();
 
         if ($requestedCommand === null) {
-            return self::createCommandOverview($this->commands, $this->getPayload());
+            /** @var Promise<SendTemplatedMessage> $promise */
+            $promise = $this->promise(self::createCommandOverview($this->commands, $this->getPayload()));
+            return $promise;
         }
 
         if ($requestedCommand === $this->getName()) {
-            return $this->createCommandHelp($this);
+            return $this->action($this->createCommandHelp($this));
         }
 
         $command = $this->commands->findByName($requestedCommand);
 
         if ($command === null) {
-            return self::createCommandOverview($this->commands, $this->getPayload(), $requestedCommand);
+            /** @var Promise<SendTemplatedMessage> $promise */
+            $promise = $this->promise(self::createCommandOverview($this->commands, $this->getPayload(), $requestedCommand));
+            return $promise;
         }
 
-        return $this->createCommandHelp($command);
+        return $this->action($this->createCommandHelp($command));
     }
 }

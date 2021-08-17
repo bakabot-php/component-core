@@ -13,11 +13,19 @@ use Bakabot\Payload\PayloadInterface;
 final class Payload implements PayloadInterface
 {
     private string $commandName;
+    /** @var string[] */
     private array $parsedArguments;
     private string $prefix;
     private string $rawArguments;
     private PayloadInterface $wrappedPayload;
 
+    /**
+     * @param PayloadInterface $wrappedPayload
+     * @param string $prefix
+     * @param string $commandName
+     * @param string[] $parsedArguments
+     * @param string $rawArguments
+     */
     public function __construct(
         PayloadInterface $wrappedPayload,
         string $prefix,
@@ -30,11 +38,6 @@ final class Payload implements PayloadInterface
         $this->prefix = $prefix;
         $this->rawArguments = $rawArguments;
         $this->wrappedPayload = $wrappedPayload;
-    }
-
-    public function getAllowedCommands(): ?array
-    {
-        return $this->wrappedPayload->getAllowedCommands();
     }
 
     public function getChannel(): ChannelInterface
@@ -62,9 +65,7 @@ final class Payload implements PayloadInterface
         return $this->wrappedPayload->getMessage();
     }
 
-    /**
-     * @return string[]
-     */
+    /** @return string[] */
     public function getParsedArguments(): array
     {
         return $this->parsedArguments;

@@ -4,7 +4,8 @@ declare(strict_types = 1);
 
 namespace Bakabot\Command;
 
-use Bakabot\Action\ActionInterface;
+use Amp\Promise;
+use Amp\Success;
 use Bakabot\Action\DoNothing;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
@@ -31,9 +32,9 @@ class RegistryTest extends TestCase
                 return [$this->environment];
             }
 
-            public function run(): ActionInterface
+            public function run(): Promise
             {
-                return new DoNothing();
+                return new Success(new DoNothing());
             }
         };
     }

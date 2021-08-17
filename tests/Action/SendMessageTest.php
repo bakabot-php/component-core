@@ -7,19 +7,10 @@ namespace Bakabot\Action;
 use Bakabot\Chat\Channel\ChannelInterface;
 use Bakabot\Chat\Message\MessageInterface;
 use Bakabot\Chat\User\UserInterface;
-use LogicException;
 use PHPUnit\Framework\TestCase;
 
 class SendMessageTest extends TestCase
 {
-    /** @test */
-    public function needs_either_message_or_context(): void
-    {
-        $this->expectException(LogicException::class);
-
-        new SendMessage($this->createMock(ChannelInterface::class));
-    }
-
     /** @test */
     public function acts_as_dto(): void
     {

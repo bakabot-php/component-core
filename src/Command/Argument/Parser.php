@@ -31,6 +31,7 @@ final class Parser
             $name = trim($token, '[]*');
             [$name, $type] = $this->detectType($name);
 
+            /** @var string $name */
             $type = $type ? "{$type}[]" : 'array';
 
             $definition
@@ -47,6 +48,7 @@ final class Parser
             $name = trim($token, '*');
             [$name, $type] = $this->detectType($name);
 
+            /** @var string $name */
             $type = $type ? "{$type}[]" : 'array';
 
             $definition
@@ -62,10 +64,11 @@ final class Parser
             $name = trim($token, '[]');
             [$name, $type] = $this->detectType($name);
 
+            /** @var string $name */
             $definition->setDefined($name);
             $definition->setDefault($name, null);
 
-            if ($type) {
+            if (is_string($type)) {
                 $definition->setAllowedTypes($name, [$type, 'null']);
             }
         }
@@ -75,9 +78,10 @@ final class Parser
             $name = $token;
             [$name, $type] = $this->detectType($name);
 
+            /** @var string $name */
             $definition->setRequired($name);
 
-            if ($type) {
+            if (is_string($type)) {
                 $definition->setAllowedTypes($name, $type);
             }
         }

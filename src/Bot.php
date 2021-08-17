@@ -4,43 +4,39 @@ declare(strict_types = 1);
 
 namespace Bakabot;
 
-use Amp\Loop;
-use Bakabot\Component\Collection as ComponentCollection;
-use Bakabot\Component\ComponentInterface;
-use Bakabot\Component\Core\Amp\Loop\RebootException;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 final class Bot
 {
-    private Kernel $kernel;
+    private KernelInterface $kernel;
 
-    /**
-     * @param ComponentCollection|ComponentInterface[] $components
-     * @param ContainerInterface|null $container
-     */
-    public function __construct(ComponentCollection|array $components, ?ContainerInterface $container = null)
+    public function __construct(KernelInterface $kernel)
     {
-        $this->kernel = new Kernel($components, $container);
+        $this->kernel = $kernel;
     }
 
     public function getContainer(): ContainerInterface
     {
-        return $this->kernel->getContainer();
+        return $this->kernel->boot();
     }
 
     public function run(?callable $callback = null): void
     {
-        reboot:
-        $this->kernel->boot();
+        $container = $this->kernel->boot();
+
+        /** @var LoggerInterface $logger */
+        $logger = $container->get(LoggerInterface::class);
+        $logger->debug('Kernel booted.');
 
         try {
-            Loop::run($callback);
-        } catch (RebootException) {
+            $logger->info('Starting kernel...');
+            $this->kernel->start($callback);
+        } finally {
+            $logger->debug('Shutting down...');
             $this->kernel->shutdown();
-            goto reboot;
+            $logger->debug('Shutdown complete.');
+            unset($container, $logger, $this->kernel);
         }
-
-        $this->kernel->shutdown();
-        unset($this->kernel);
     }
 }

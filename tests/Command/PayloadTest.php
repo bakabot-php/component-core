@@ -22,13 +22,10 @@ class PayloadTest extends TestCase
             $channel = $this->createMock(ChannelInterface::class),
             $message = $this->createMock(MessageInterface::class),
             $server = $this->createMock(ServerInterface::class),
-            null
         );
 
-        $decoratedPayload = Payload::withAllowedCommands($payload, ['my_command']);
-
         $commandPayload = new CommandPayload(
-            $decoratedPayload,
+            $payload,
             $prefix = '!',
             $name = 'help',
             $parsedArguments = [],
@@ -39,7 +36,6 @@ class PayloadTest extends TestCase
         self::assertSame($channel, $commandPayload->getChannel());
         self::assertSame($message, $commandPayload->getMessage());
         self::assertSame($server, $commandPayload->getServer());
-        self::assertSame(['my_command'], $commandPayload->getAllowedCommands());
 
         self::assertSame($prefix, $commandPayload->getCommandPrefix());
         self::assertSame($name, $commandPayload->getCommandName());

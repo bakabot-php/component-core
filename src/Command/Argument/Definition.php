@@ -15,7 +15,7 @@ final class Definition extends OptionsResolver
     private ?int $greedyArgumentIndex = null;
 
     /**
-     * @param string|array<int, string> $options
+     * @param string|array<array-key, string> $options
      */
     private function registerArguments(string|array $options): void
     {
@@ -96,7 +96,11 @@ final class Definition extends OptionsResolver
             $options = array_combine($argumentMap, $parsedArguments);
         }
 
-        return $this->resolve($options);
+        /** @var array<string, string> $options */
+        $resolvedOptions = $this->resolve($options);
+
+        /** @var array<string, string> $resolvedOptions */
+        return $resolvedOptions;
     }
 
     /**
