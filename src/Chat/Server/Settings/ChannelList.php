@@ -4,8 +4,8 @@ declare(strict_types = 1);
 
 namespace Bakabot\Chat\Server\Settings;
 
+use Bakabot\Chat\Channel\Channel;
 use Countable;
-use Stringable;
 
 final class ChannelList implements Countable
 {
@@ -18,9 +18,9 @@ final class ChannelList implements Countable
         $this->keyed = array_flip($list);
     }
 
-    public function contains(string|Stringable $channelId): bool
+    public function contains(string|Channel $channel): bool
     {
-        return isset($this->keyed[(string) $channelId]);
+        return isset($this->keyed[(string) $channel]);
     }
 
     public function count(): int

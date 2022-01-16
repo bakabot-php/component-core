@@ -13,7 +13,7 @@ class ServerTest extends TestCase
     {
         $server = new Server('1234567890', 'my-awesome-server');
 
-        self::assertSame('1234567890', $server->getId());
-        self::assertSame('my-awesome-server', $server->getName());
+        self::assertSame('1234567890', $server->id());
+        self::assertSame('my-awesome-server', $server->name());
     }
 }

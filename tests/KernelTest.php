@@ -53,7 +53,7 @@ class KernelTest extends TestCase
         $components = [$component];
         $kernel = $this->createKernel($components);
 
-        self::assertEquals(new Collection($components), $kernel->getComponents());
+        self::assertEquals(new Collection($components), $kernel->components());
     }
 
     /** @test */
@@ -76,7 +76,7 @@ class KernelTest extends TestCase
     public function can_compile_the_resulting_container(): void
     {
         $kernel = $this->createKernel([new CoreComponent()]);
-        $kernel->enableContainerCompilation();
+        $kernel->compileContainer();
         $kernel->boot();
 
         self::assertDirectoryExists('/tmp/var/test/cache');

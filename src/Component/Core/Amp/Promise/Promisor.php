@@ -7,86 +7,72 @@ namespace Bakabot\Component\Core\Amp\Promise;
 use Amp\Deferred;
 use Amp\Promise;
 use Amp\Success;
-use Bakabot\Action\ActionInterface;
-use Bakabot\Payload\PayloadInterface;
+use Bakabot\Action\Action;
+use Bakabot\Chat\Message\Message;
+use Bakabot\Command\Payload;
 
 trait Promisor
 {
     /**
-     * @param ActionInterface $action
+     * @param Action $action
      * @param Deferred|null $deferred
-     * @return Promise<ActionInterface>
+     * @return Promise<Action>
      */
-    final protected function action(ActionInterface $action, ?Deferred $deferred = null): Promise
+    final protected function action(Action $action, ?Deferred $deferred = null): Promise
     {
         if ($deferred !== null) {
             $deferred->resolve($action);
-
-            /** @var Promise<ActionInterface> $deferredPromise */
-            $deferredPromise = $deferred->promise();
-            return $deferredPromise;
+            return $deferred->promise();
         }
 
-        /** @var Promise<ActionInterface> $success */
-        $success = new Success($action);
-        return $success;
+        return new Success($action);
     }
 
     /**
      * @param Deferred $deferred
-     * @return Promise<ActionInterface|PayloadInterface>
+     * @return Promise<Action|Message|Payload>
      */
     final protected function defer(Deferred $deferred): Promise
     {
-        /** @var Promise<ActionInterface|PayloadInterface> $deferredPromise */
-        $deferredPromise = $deferred->promise();
-        return $deferredPromise;
+        return $deferred->promise();
     }
 
     /**
-     * @param PayloadInterface $payload
+     * @param Message $message
      * @param Deferred|null $deferred
-     * @return Promise<PayloadInterface>
+     * @return Promise<Message>
      */
-    final protected function payload(PayloadInterface $payload, ?Deferred $deferred = null): Promise
+    final protected function message(Message $message, ?Deferred $deferred = null): Promise
     {
         if ($deferred !== null) {
-            $deferred->resolve($payload);
-
-            /** @var Promise<PayloadInterface> $deferredPromise */
-            $deferredPromise = $deferred->promise();
-            return $deferredPromise;
+            $deferred->resolve($message);
+            return $deferred->promise();
         }
 
-        /** @var Promise<PayloadInterface> $success */
-        $success = new Success($payload);
-        return $success;
+        return new Success($message);
     }
 
     /**
-     * @param ActionInterface|PayloadInterface|Promise<ActionInterface|PayloadInterface> $value
+     * @param Action|Message|Payload|Promise<Action|Message|Payload> $value
      * @param Deferred|null $deferred
-     * @return Promise<ActionInterface|PayloadInterface>
+     * @return Promise<Action|Message|Payload>
      */
     final protected function promise(
-        ActionInterface|PayloadInterface|Promise $value,
+        Action|Message|Payload|Promise $value,
         ?Deferred $deferred = null
     ): Promise {
-        if ($value instanceof ActionInterface) {
+        if ($value instanceof Action) {
             return $this->action($value, $deferred);
         }
 
-        if ($value instanceof PayloadInterface) {
-            return $this->payload($value, $deferred);
+        if ($value instanceof Message) {
+            return $this->message($value, $deferred);
         }
 
-        /** @var Promise<ActionInterface|PayloadInterface> $value */
+        /** @var Promise<Action|Message|Payload> $value */
         if ($deferred !== null) {
             $deferred->resolve($value);
-
-            /** @var Promise<ActionInterface|PayloadInterface> $deferredPromise */
-            $deferredPromise = $deferred->promise();
-            return $deferredPromise;
+            return $deferred->promise();
         }
 
         return $value;

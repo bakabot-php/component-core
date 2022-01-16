@@ -12,10 +12,10 @@ class FallbackLanguageSourceTest extends TestCase
     /** @test */
     public function uses_fallback_on_any_error(): void
     {
-        $main = $this->createMock(LanguageSourceInterface::class);
+        $main = $this->createMock(LanguageSource::class);
         $main->expects($this->once())->method('getLanguage')->willThrowException(new RuntimeException());
 
         $fallback = new FallbackLanguageSource($main, new Language('es'));
-        self::assertSame('es', (string) $fallback->getLanguage());
+        self::assertSame('es', (string) $fallback->language());
     }
 }

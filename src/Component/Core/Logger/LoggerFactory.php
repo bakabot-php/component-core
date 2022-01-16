@@ -22,9 +22,9 @@ final class LoggerFactory
         $this->defaultLevel = $defaultLevel;
     }
 
-    public function create(?string $name = null): LoggerInterface
+    public function create(string $name): LoggerInterface
     {
-        $logger = new Logger($name ?? bin2hex(random_bytes(3)));
+        $logger = new Logger($name);
 
         foreach ($this->handlers as $handler) {
             $logger->pushHandler($handler);

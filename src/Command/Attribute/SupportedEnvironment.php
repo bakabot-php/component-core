@@ -9,7 +9,7 @@ use Attribute;
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 final class SupportedEnvironment
 {
-    public function __construct(public string $value)
+    public function __construct(public /* readonly */ string $value)
     {
     }
 }

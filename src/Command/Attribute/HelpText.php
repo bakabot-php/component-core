@@ -9,7 +9,7 @@ use Attribute;
 #[Attribute(Attribute::TARGET_CLASS)]
 final class HelpText
 {
-    public function __construct(public string $value)
+    public function __construct(public /* readonly */ string $value)
     {
     }
 }

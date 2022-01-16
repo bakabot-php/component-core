@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Bakabot\Command\Argument;
 
 use BadMethodCallException;
-use Bakabot\Command\Payload;
+use Bakabot\Command\BasePayload;
 use Bakabot\Payload\PayloadInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -32,8 +32,8 @@ class DefinitionTest extends TestCase
     private function createPayload(
         array $parsedArguments,
         string $rawArguments
-    ): Payload {
-        return new Payload(
+    ): BasePayload {
+        return new BasePayload(
             $this->createMock(PayloadInterface::class),
             '!',
             'test',

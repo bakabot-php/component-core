@@ -8,8 +8,8 @@ use Amp\Promise;
 use Amp\Success;
 use Bakabot\Action\DoNothing;
 use Bakabot\Action\SendFiles;
-use Bakabot\Chat\Channel\ChannelInterface;
-use Bakabot\Command\Payload;
+use Bakabot\Chat\Channel\Channel;
+use Bakabot\Command\BasePayload;
 use Bakabot\Payload\PayloadInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -29,7 +29,7 @@ class ProcessorChainTest extends TestCase
     /** @test */
     public function payload_can_be_decorated_between_processors(): void
     {
-        $commandPayload = $this->createMock(Payload::class);
+        $commandPayload = $this->createMock(BasePayload::class);
 
         $decorator = $this->createMock(ProcessorInterface::class);
         $decorator->expects($this->once())->method('process')->willReturn(new Success($commandPayload));
@@ -37,7 +37,7 @@ class ProcessorChainTest extends TestCase
         $producer = $this->createMock(ProcessorInterface::class);
         $producer->expects($this->once())->method('process')->with($commandPayload)->willReturn(
             new Success(
-                new SendFiles($this->createMock(ChannelInterface::class), [])
+                new SendFiles($this->createMock(Channel::class), [])
             )
         );
 

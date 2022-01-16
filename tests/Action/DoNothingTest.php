@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Bakabot\Action;
 
-use Bakabot\Chat\Message\MessageInterface;
+use Bakabot\Chat\Message\Message;
 use LogicException;
 use PHPUnit\Framework\TestCase;
 
@@ -14,13 +14,13 @@ class DoNothingTest extends TestCase
     public function does_nothing_but_satisfy_the_action_interface(): void
     {
         $action = new DoNothing();
-        $action->setTriggerMessage($this->createMock(MessageInterface::class));
+        $action->setTriggerMessage($this->createMock(Message::class));
 
         self::assertFalse($action->deleteTriggerMessage());
-        self::assertFalse($action->shouldPingRecipient());
+        self::assertFalse($action->mentionsRecipient());
 
         try {
-            $action->getTarget();
+            $action->target();
         } catch (LogicException) {
             $this->addToAssertionCount(1);
         }

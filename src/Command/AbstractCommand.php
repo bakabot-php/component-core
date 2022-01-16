@@ -4,36 +4,32 @@ declare(strict_types = 1);
 
 namespace Bakabot\Command;
 
+use Amp\Promise;
+use Bakabot\Action\Action;
+use Bakabot\Action\Reply;
 use Bakabot\Attribute\AttributeValueGetter;
 use Bakabot\Attribute\Exception\MissingAttributeException;
 use Bakabot\Command\Argument\Definition;
 use Bakabot\Command\Argument\Parser as DefinitionParser;
 use Bakabot\Command\Attribute as Cmd;
+use Bakabot\Command\Trigger\PrefixedMessage;
 use Bakabot\Component\Core\Amp\Promise\Promisor;
 use ReflectionException;
 
-abstract class AbstractCommand implements CommandInterface
+abstract class AbstractCommand implements Command
 {
     use Promisor;
 
     private ?Definition $argumentDefinition = null;
     /** @var array<string, string> */
     private array $arguments = [];
-    private ?Payload $payload = null;
     /** @var string[] */
     private ?array $supportedEnvironments = null;
 
-    protected function createArgumentDefinition(): Definition
-    {
-        return (new DefinitionParser())->parse($this->getArgumentExpression());
-    }
+    /** @psalm-suppress PropertyNotSetInConstructor */
+    protected Payload $payload;
 
-    final protected function getArgument(string $name): mixed
-    {
-        return $this->arguments[$name];
-    }
-
-    final protected function getArgumentDefinition(): Argument\Definition
+    private function argumentDefinition(): Argument\Definition
     {
         if ($this->argumentDefinition === null) {
             $this->argumentDefinition = $this->createArgumentDefinition();
@@ -42,60 +38,84 @@ abstract class AbstractCommand implements CommandInterface
         return $this->argumentDefinition;
     }
 
+    protected function createArgumentDefinition(): Definition
+    {
+        return (new DefinitionParser())->parse($this->argumentExpression());
+    }
+
+    final protected function argument(string $name): mixed
+    {
+        return $this->arguments[$name];
+    }
+
     /** @return array<string, string> */
-    final protected function getArguments(): array
+    final protected function arguments(): array
     {
         return $this->arguments;
     }
 
-    final protected function getCommandPrefix(): string
+    final protected function prefix(): ?string
     {
-        return $this->getPayload()->getCommandPrefix();
+        $trigger = $this->payload->trigger;
+
+        if ($trigger instanceof PrefixedMessage) {
+            return $trigger->prefix();
+        }
+
+        return null;
     }
 
-    final protected function getPayload(): Payload
+    final protected function reply(): Reply
     {
-        assert($this->payload !== null);
-
-        return $this->payload;
+        return $this->payload->message->environment->replier($this->payload->message);
     }
 
     final public function bind(Payload $payload): void
     {
-        $this->arguments = $this->getArgumentDefinition()->resolveArguments($payload);
+        $this->arguments = $this->argumentDefinition()->resolveArguments($payload);
         $this->payload = $payload;
     }
 
-    public function getArgumentExpression(): string
+    public function argumentExpression(): string
     {
-        return (string)AttributeValueGetter::getAttributeValue($this, Cmd\ArgumentExpression::class, '');
+        return (string) AttributeValueGetter::getAttributeValue($this, Cmd\ArgumentExpression::class, '');
     }
 
-    public function getDescription(): string
+    public function description(): string
     {
-        return (string)AttributeValueGetter::getAttributeValue($this, Cmd\Description::class);
+        return (string) AttributeValueGetter::getAttributeValue($this, Cmd\Description::class);
     }
 
-    public function getHelpText(): string
+    public function helpText(): string
     {
-        return (string)AttributeValueGetter::getAttributeValue(
+        return (string) AttributeValueGetter::getAttributeValue(
             $this,
             Cmd\HelpText::class,
-            fn() => $this->getDescription()
+            fn() => $this->description()
         );
     }
 
-    public function getName(): string
+    public function name(): string
     {
         return (string) AttributeValueGetter::getAttributeValue($this, Cmd\Name::class);
     }
 
+    abstract protected function execute(): Action;
+
     /**
-     * @return string[]
+     * @return Promise<Action>
+     */
+    public function run(): Promise
+    {
+        return $this->promise($this->execute());
+    }
+
+    /**
      * @throws MissingAttributeException
      * @throws ReflectionException
+     * @return string[]
      */
-    public function getSupportedEnvironments(): array
+    public function supportedEnvironments(): array
     {
         if ($this->supportedEnvironments === null) {
             /** @var string[] $supportedEnvironments */
@@ -111,6 +131,6 @@ abstract class AbstractCommand implements CommandInterface
 
     public function __toString(): string
     {
-        return $this->getName();
+        return $this->name();
     }
 }

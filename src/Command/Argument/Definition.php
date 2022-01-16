@@ -5,14 +5,14 @@ declare(strict_types = 1);
 namespace Bakabot\Command\Argument;
 
 use BadMethodCallException;
-use Bakabot\Command\Payload as CommandPayload;
+use Bakabot\Command\Payload;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 final class Definition extends OptionsResolver
 {
     private int $argumentCount = 0;
     private array $argumentMap = [];
-    private ?int $greedyArgumentIndex = null;
+    private ?int $greedyArgumentPosition = null;
 
     /**
      * @param string|array<array-key, string> $options
@@ -28,49 +28,49 @@ final class Definition extends OptionsResolver
 
     public function clear(): self
     {
-        throw new BadMethodCallException();
+        throw new BadMethodCallException('Not supported.');
     }
 
-    public function getGreedyArgumentIndex(): ?int
+    public function greedyArgumentPosition(): ?int
     {
-        return $this->greedyArgumentIndex;
+        return $this->greedyArgumentPosition;
     }
 
     public function remove($optionNames): self
     {
-        throw new BadMethodCallException();
+        throw new BadMethodCallException('Not supported.');
     }
 
     /**
-     * @param CommandPayload $payload
+     * @param Payload $payload
      * @return array<string, string>
      */
-    public function resolveArguments(CommandPayload $payload): array
+    public function resolveArguments(Payload $payload): array
     {
         $argumentMap = array_flip($this->argumentMap);
         $defined = $this->getDefinedOptions();
 
-        if ($this->greedyArgumentIndex === null && count($defined) === 1) {
+        if ($this->greedyArgumentPosition === null && count($defined) === 1) {
             $argument = reset($defined);
 
             $value = $argument === 'message'
-                ? $payload->getRawArguments()
-                : $payload->getParsedArguments()[0] ?? null;
+                ? $payload->rawArguments
+                : $payload->parsedArguments[0] ?? null;
 
             $options = [$argument => $value];
-        } elseif ($this->greedyArgumentIndex !== null) {
-            $arguments = $payload->getParsedArguments();
+        } elseif ($this->greedyArgumentPosition !== null) {
+            $arguments = $payload->parsedArguments;
 
             $options = [];
-            for ($i = 0; $i < $this->greedyArgumentIndex; ++$i) {
+            for ($i = 0; $i < $this->greedyArgumentPosition; ++$i) {
                 $options[$argumentMap[$i]] = $arguments[$i];
                 unset($argumentMap[$i], $arguments[$i]);
             }
 
-            $greedyArgument = $argumentMap[$this->greedyArgumentIndex];
+            $greedyArgument = $argumentMap[$this->greedyArgumentPosition];
             $options[$greedyArgument] = array_values($arguments);
         } else {
-            $parsedArguments = $payload->getParsedArguments();
+            $parsedArguments = $payload->parsedArguments;
 
             $actualCount = count($parsedArguments);
             $expectedCount = count($argumentMap);
@@ -114,9 +114,9 @@ final class Definition extends OptionsResolver
         return parent::setDefined($optionNames);
     }
 
-    public function setGreedyArgumentIndex(int $greedyArgumentIndex): void
+    public function setGreedyArgumentPosition(int $greedyArgumentPosition): void
     {
-        $this->greedyArgumentIndex = $greedyArgumentIndex;
+        $this->greedyArgumentPosition = $greedyArgumentPosition;
     }
 
     /**

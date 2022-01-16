@@ -9,23 +9,21 @@ use Amp\Loop\Driver;
 use Amp\ReactAdapter\ReactAdapter;
 use Bakabot\Chat\Server\Language\FallbackLanguageSource;
 use Bakabot\Chat\Server\Language\Language;
-use Bakabot\Chat\Server\Language\LanguageSourceInterface;
+use Bakabot\Chat\Server\Language\LanguageSource;
 use Bakabot\Chat\Server\Language\EnvironmentLanguageSource;
-use Bakabot\Chat\Server\Settings\ServerSettingsSourceInterface;
-use Bakabot\Chat\Server\Settings\JsonDatabaseSource;
+use Bakabot\Chat\Server\Settings\SettingsSource;
+use Bakabot\Chat\Server\Settings\JsonFileSource;
 use Bakabot\Command\Prefix\Prefix;
-use Bakabot\Command\Prefix\PrefixSourceInterface;
+use Bakabot\Command\Prefix\PrefixSource;
 use Bakabot\Command\Registry;
 use Bakabot\Component\Attribute\RegistersParameter;
 use Bakabot\Component\Attribute\RegistersService;
 use Bakabot\Component\Core\Logger\LoggerFactory;
 use Bakabot\Kernel;
-use Bakabot\KernelInterface;
 use Bakabot\Payload\Processor\Firewall\Firewall;
 use Bakabot\Payload\Processor\Firewall\Rule\IgnoreBots;
 use Bakabot\Payload\Processor\ProcessorChain;
 use Bakabot\Payload\Processor\ProcessorFactory;
-use Locale;
 use Monolog\ErrorHandler;
 use Monolog\Logger;
 use Psr\Container\ContainerInterface;
@@ -53,29 +51,12 @@ use function DI\string;
 #[RegistersService(Firewall::class)]
 #[RegistersService(Logger::class, 'Main application logger', LoggerInterface::class)]
 #[RegistersService(LoggerInterface::class, 'Main application logger')]
+#[RegistersService(Loop::class, 'Main application loop')]
 #[RegistersService(ProcessorChain::class)]
 #[RegistersService(Registry::class)]
 final class CoreComponent extends AbstractComponent
 {
-    public function boot(ContainerInterface $container): void
-    {
-        // register the global error handling logger
-        /** @var LoggerInterface $logger */
-        $logger = $container->get('bakabot.logs.error');
-        ErrorHandler::register($logger);
-
-        // register the default loop driver
-        /** @var Driver $driver */
-        $driver = $container->get(Driver::class);
-        Loop::set($driver);
-    }
-
-    public function shutdown(ContainerInterface $container): void
-    {
-        Loop::stop();
-    }
-
-    protected function getParameters(): array
+    protected function parameters(): array
     {
         return [
             // core component specific
@@ -105,7 +86,7 @@ final class CoreComponent extends AbstractComponent
         ];
     }
 
-    protected function getServices(): array
+    protected function services(): array
     {
         return [
             // core component specific
@@ -118,16 +99,16 @@ final class CoreComponent extends AbstractComponent
 
                 return $firewall;
             },
-            KernelInterface::class => get(Kernel::class),
-            LanguageSourceInterface::class => static function (ContainerInterface $c) {
-                /** @var LanguageSourceInterface $main */
+            Kernel::class => get(Kernel::class),
+            LanguageSource::class => static function (ContainerInterface $c) {
+                /** @var LanguageSource $main */
                 $main = $c->get(EnvironmentLanguageSource::class);
                 /** @var string $defaultLanguage */
                 $defaultLanguage = $c->get('bakabot.default_language');
 
                 return new FallbackLanguageSource($main, new Language($defaultLanguage));
             },
-            PrefixSourceInterface::class => static function (ContainerInterface $c) {
+            PrefixSource::class => static function (ContainerInterface $c) {
                 /** @var string $defaultPrefix */
                 $defaultPrefix = $c->get('bakabot.default_prefix');
 
@@ -150,28 +131,28 @@ final class CoreComponent extends AbstractComponent
             ProcessorFactory::class => static function (ContainerInterface $c) {
                 /** @var Registry $registry */
                 $registry = $c->get(Registry::class);
-                /** @var ServerSettingsSourceInterface $serverSettingsSource */
-                $serverSettingsSource = $c->get(ServerSettingsSourceInterface::class);
+                /** @var SettingsSource $serverSettingsSource */
+                $serverSettingsSource = $c->get(SettingsSource::class);
 
                 return new ProcessorFactory($registry, $serverSettingsSource);
             },
             Registry::class => static fn() => new Registry(),
-            ServerSettingsSourceInterface::class => static function (ContainerInterface $c) {
+            SettingsSource::class => static function (ContainerInterface $c) {
                 /** @var string $basePath */
                 $basePath = $c->get('bakabot.dirs.var');
-                /** @var LanguageSourceInterface $languageSource */
-                $languageSource = $c->get(LanguageSourceInterface::class);
-                /** @var PrefixSourceInterface $prefixSource */
-                $prefixSource = $c->get(PrefixSourceInterface::class);
+                /** @var LanguageSource $languageSource */
+                $languageSource = $c->get(LanguageSource::class);
+                /** @var PrefixSource $prefixSource */
+                $prefixSource = $c->get(PrefixSource::class);
 
-                return new JsonDatabaseSource($basePath, $languageSource, $prefixSource);
+                return new JsonFileSource($basePath, $languageSource, $prefixSource);
             },
 
             // event loop
             Driver::class => static function (ContainerInterface $c) {
                 $driver = (new Loop\DriverFactory())->create();
                 /** @var Kernel $kernel */
-                $kernel = $c->get(KernelInterface::class);
+                $kernel = $c->get(Kernel::class);
 
                 $driver->onSignal(SIGHUP, $kernel->reload($driver));
                 $driver->onSignal(SIGINT, $kernel->stop($driver));
@@ -232,5 +213,23 @@ final class CoreComponent extends AbstractComponent
                 return $loggerFactory->create($lowerCasedName);
             },
         ];
+    }
+
+    public function boot(ContainerInterface $container): void
+    {
+        // register the global error handling logger
+        /** @var LoggerInterface $logger */
+        $logger = $container->get('bakabot.logs.error');
+        ErrorHandler::register($logger);
+
+        // register the default loop driver
+        /** @var Driver $driver */
+        $driver = $container->get(Driver::class);
+        Loop::set($driver);
+    }
+
+    public function shutdown(ContainerInterface $container): void
+    {
+        Loop::stop();
     }
 }

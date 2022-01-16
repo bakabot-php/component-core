@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 class CollectionTest extends TestCase
 {
-    private function getTestCommand(string $environment = 'discord'): CommandInterface
+    private function getTestCommand(string $environment = 'discord'): Command
     {
         return new class($environment) extends AbstractCommand {
             private string $environment;
@@ -21,12 +21,12 @@ class CollectionTest extends TestCase
                 $this->environment = $environment;
             }
 
-            public function getName(): string
+            public function name(): string
             {
                 return 'test';
             }
 
-            public function getSupportedEnvironments(): array
+            public function supportedEnvironments(): array
             {
                 return [$this->environment];
             }
@@ -41,7 +41,7 @@ class CollectionTest extends TestCase
     /** @test */
     public function empty_collection_is_considered_null_iterator(): void
     {
-        $collection = new Collection();
+        $collection = new Commands();
 
         self::assertSame(0, iterator_count($collection));
     }
@@ -51,11 +51,11 @@ class CollectionTest extends TestCase
     {
         $command = $this->getTestCommand();
 
-        $collection = new Collection();
-        $collection->push($command->getName(), $command);
+        $collection = new Commands();
+        $collection->push($command->name(), $command);
 
         self::assertSame(1, iterator_count($collection));
-        self::assertSame([$command->getName() => $command], iterator_to_array($collection));
+        self::assertSame([$command->name() => $command], iterator_to_array($collection));
     }
 
     /** @test */
@@ -63,10 +63,10 @@ class CollectionTest extends TestCase
     {
         $command = $this->getTestCommand();
 
-        $collection = new Collection();
-        $collection->push($command->getName(), $command);
+        $collection = new Commands();
+        $collection->push($command->name(), $command);
 
-        self::assertSame($command, $collection->findByName($command->getName()));
+        self::assertSame($command, $collection->findByName($command->name()));
         self::assertNull($collection->findByName('does-not-exist'));
     }
 }

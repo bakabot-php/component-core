@@ -6,11 +6,11 @@ namespace Bakabot\Payload\Processor\Firewall;
 
 use Amp\Promise;
 use Bakabot\Action\DoNothing;
-use Bakabot\Chat\Channel\ChannelInterface;
-use Bakabot\Chat\Message\MessageInterface;
-use Bakabot\Chat\User\UserInterface;
-use Bakabot\EnvironmentInterface;
-use Bakabot\Payload\Payload;
+use Bakabot\Chat\Channel\Channel;
+use Bakabot\Chat\Message\Message;
+use Bakabot\Chat\User\User;
+use Bakabot\Environment;
+use Bakabot\Payload\BasePayload;
 use Bakabot\Payload\Processor\Firewall\Rule\IgnoreBots;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
@@ -20,19 +20,19 @@ class FirewallIntegrationTest extends TestCase
     /** @test */
     public function will_log_detailed_message_for_violations(): void
     {
-        $environment = $this->createMock(EnvironmentInterface::class);
+        $environment = $this->createMock(Environment::class);
         $environment->method('getName')->willReturn('discord');
 
-        $author = $this->createMock(UserInterface::class);
+        $author = $this->createMock(User::class);
         $author->method('getId')->willReturn('1234');
         $author->method('isBot')->willReturn(true);
 
-        $message = $this->createMock(MessageInterface::class);
+        $message = $this->createMock(Message::class);
         $message->method('getAuthor')->willReturn($author);
 
-        $payload = new Payload(
+        $payload = new BasePayload(
             $environment,
-            $this->createMock(ChannelInterface::class),
+            $this->createMock(Channel::class),
             $message,
             null,
         );

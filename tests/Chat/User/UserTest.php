@@ -19,8 +19,8 @@ class UserTest extends TestCase
             false
         );
 
-        self::assertSame($id, $user->getId());
-        self::assertSame('Nayleen', $user->getUsername());
+        self::assertSame($id, $user->id());
+        self::assertSame('Nayleen', $user->username());
         self::assertSame('Minaire', $user->getNickname());
         self::assertFalse($user->isBot());
         self::assertSame($id, (string) $user);

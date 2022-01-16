@@ -4,28 +4,16 @@ declare(strict_types = 1);
 
 namespace Bakabot\Action;
 
-use Bakabot\Chat\TargetInterface;
-
-final class SendFiles extends AbstractAction implements SendFilesInterface
+/** @psalm-suppress PropertyNotSetInConstructor */
+final class SendFiles extends AbstractAction
 {
     /** @var string[] */
-    private array $files;
+    public /* readonly */ array $files;
 
-    /**
-     * @param string[] $files
-     */
-    public function __construct(TargetInterface $target, array $files, bool $pingRecipient = false)
+    public function withFiles(array $files): self
     {
-        parent::__construct($target, $pingRecipient);
+        assert(count($files) > 0);
 
-        $this->files = array_values($files);
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getFiles(): array
-    {
-        return $this->files;
+        return $this->copy(files: array_values($files));
     }
 }

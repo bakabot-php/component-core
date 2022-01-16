@@ -6,17 +6,18 @@ namespace Bakabot\Command\Prefix;
 
 use Stringable;
 
-final class Prefix implements PrefixSourceInterface, Stringable
+/** @psalm-immutable */
+final class Prefix implements PrefixSource
 {
-    private int $length;
-    private string $prefix;
+    public /* readonly */ int $length;
+    public /* readonly */ string $prefix;
 
     public function __construct(string|Stringable $prefix)
     {
         $trimmedPrefix = trim((string) $prefix);
         assert($trimmedPrefix !== '');
 
-        $this->length = strlen($trimmedPrefix);
+        $this->length = mb_strlen($trimmedPrefix);
         $this->prefix = $trimmedPrefix;
     }
 

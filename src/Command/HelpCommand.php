@@ -4,10 +4,9 @@ declare(strict_types = 1);
 
 namespace Bakabot\Command;
 
-use Amp\Deferred;
 use Amp\Promise;
 use Amp\Success;
-use Bakabot\Action\ActionInterface;
+use Bakabot\Action\Action;
 use Bakabot\Action\SendTemplatedMessage;
 use Bakabot\Command\Attribute\ArgumentExpression;
 use Bakabot\Command\Attribute\Description;
@@ -20,7 +19,7 @@ use Bakabot\Command\Attribute\Name;
 #[Name(HelpCommand::NAME)]
 final class HelpCommand extends AbstractCommand
 {
-    private Collection $commands;
+    private Commands $commands;
 
     /** @var string */
     public const NAME = 'help';
@@ -29,85 +28,81 @@ final class HelpCommand extends AbstractCommand
     /** @var string */
     public const TEMPLATE_HELP_OVERVIEW = 'help.command_overview';
 
-    public function __construct(Collection $commands)
+    public function __construct(Commands $commands)
     {
         $this->commands = $commands;
     }
 
-    private function getNormalizedCommandName(): ?string
+    private function commandHelp(Command $command): SendTemplatedMessage
+    {
+        return SendTemplatedMessage::to($this->payload->message->channel)
+            ->withTemplate(
+                self::TEMPLATE_COMMAND_HELP,
+                [
+                    'command' => $command,
+                    'prefix' => $this->prefix(),
+                ]
+            )
+        ;
+    }
+
+    private function requestedCommand(): ?string
     {
         /** @var string|null $commandName */
-        $commandName = $this->getArgument('command');
+        $commandName = $this->argument('command');
 
         if ($commandName === null) {
             return null;
         }
 
         /** @var string $commandName */
-        $commandName = ltrim($commandName, $this->getCommandPrefix());
+        $commandName = ltrim($commandName, $this->prefix());
 
         return $commandName === '' ? null : strtolower($commandName);
     }
 
-    private function createCommandHelp(CommandInterface $command): SendTemplatedMessage
+    protected function execute(): Action
     {
-        return new SendTemplatedMessage(
-            $this->getPayload()->getChannel(),
-            self::TEMPLATE_COMMAND_HELP,
-            [
-                'command' => $command,
-                'prefix' => $this->getPayload()->getCommandPrefix(),
-            ]
-        );
-    }
+        $requestedCommand = $this->requestedCommand();
 
-    /**
-     * @param Collection $commands
-     * @param Payload $payload
-     * @param string|null $requestedCommand
-     * @return Promise<SendTemplatedMessage>
-     */
-    public static function createCommandOverview(
-        Collection $commands,
-        Payload $payload,
-        ?string $requestedCommand = null
-    ): Promise {
-        return new Success(
-            new SendTemplatedMessage(
-                $payload->getChannel(),
-                self::TEMPLATE_HELP_OVERVIEW,
-                [
-                    'commands' => $commands,
-                    'prefix' => $payload->getCommandPrefix(),
-                    'requested_command' => $requestedCommand,
-                ]
-            )
-        );
-    }
+        switch ($requestedCommand) {
+            case null:
+                return self::commandListing($this->commands, $this->payload);
 
-    /** @return Promise<ActionInterface> */
-    public function run(): Promise
-    {
-        $requestedCommand = $this->getNormalizedCommandName();
-
-        if ($requestedCommand === null) {
-            /** @var Promise<SendTemplatedMessage> $promise */
-            $promise = $this->promise(self::createCommandOverview($this->commands, $this->getPayload()));
-            return $promise;
-        }
-
-        if ($requestedCommand === $this->getName()) {
-            return $this->action($this->createCommandHelp($this));
+            case $this->name():
+                return $this->commandHelp($this);
         }
 
         $command = $this->commands->findByName($requestedCommand);
 
         if ($command === null) {
-            /** @var Promise<SendTemplatedMessage> $promise */
-            $promise = $this->promise(self::createCommandOverview($this->commands, $this->getPayload(), $requestedCommand));
-            return $promise;
+            return self::commandListing($this->commands, $this->payload, $requestedCommand);
         }
 
-        return $this->action($this->createCommandHelp($command));
+        return $this->commandHelp($command);
+    }
+
+    /**
+     * @param Commands $commands
+     * @param Payload $payload
+     * @param string|null $requestedCommand
+     * @return Promise<SendTemplatedMessage>
+     */
+    public static function commandListing(
+        Commands $commands,
+        Payload $payload,
+        ?string $requestedCommand = null
+    ): Promise {
+        return new Success(
+            SendTemplatedMessage::to($payload->message->channel)
+                ->withTemplate(
+                    self::TEMPLATE_HELP_OVERVIEW,
+                    [
+                        'commands' => $commands,
+                        'prefix' => $payload->trigger->prefix(),
+                        'requested_command' => $requestedCommand,
+                    ]
+                )
+        );
     }
 }

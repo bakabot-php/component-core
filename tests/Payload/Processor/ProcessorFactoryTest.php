@@ -8,8 +8,8 @@ use Amp\Success;
 use Bakabot\Chat\Server\Language\Language;
 use Bakabot\Chat\Server\Settings\AllowedCommands;
 use Bakabot\Chat\Server\Settings\ChannelList;
-use Bakabot\Chat\Server\Settings\ServerSettings;
-use Bakabot\Chat\Server\Settings\ServerSettingsSourceInterface;
+use Bakabot\Chat\Server\Settings\Settings;
+use Bakabot\Chat\Server\Settings\SettingsSource;
 use Bakabot\Command\Prefix\Prefix;
 use Bakabot\Command\Registry;
 use Bakabot\Payload\PayloadInterface;
@@ -20,9 +20,9 @@ class ProcessorFactoryTest extends TestCase
     /** @test */
     public function can_create_command_parser(): void
     {
-        $settingsSource = $this->createMock(ServerSettingsSourceInterface::class);
+        $settingsSource = $this->createMock(SettingsSource::class);
         $settingsSource->expects($this->once())->method('getServerSettings')->willReturn(
-            new Success(ServerSettings::withDefaults(new Language('en'), new Prefix('!')))
+            new Success(Settings::withDefaults(new Language('en'), new Prefix('!')))
         );
 
         $factory = new ProcessorFactory(new Registry(), $settingsSource);
@@ -37,10 +37,10 @@ class ProcessorFactoryTest extends TestCase
     /** @test */
     public function can_create_command_runner(): void
     {
-        $serverSettingsSource = $this->createMock(ServerSettingsSourceInterface::class);
+        $serverSettingsSource = $this->createMock(SettingsSource::class);
         $serverSettingsSource->expects($this->once())->method('getServerSettings')->willReturn(
             new Success(
-                new ServerSettings(
+                new Settings(
                     new Language('en'),
                     new Prefix('!'),
                     new AllowedCommands(['test']),

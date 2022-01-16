@@ -39,7 +39,7 @@ class PromisorTest extends TestCase
     public function can_promisify_a_payload(): void
     {
         $payload = $this->createMock(PayloadInterface::class);
-        $promise = $this->payload($payload);
+        $promise = $this->message($payload);
 
         self::assertSame($payload, Promise\wait($promise));
     }
@@ -50,7 +50,7 @@ class PromisorTest extends TestCase
         $payload = $this->createMock(PayloadInterface::class);
         $deferred = new Deferred();
 
-        $promise = $this->payload($payload, $deferred);
+        $promise = $this->message($payload, $deferred);
 
         self::assertTrue($deferred->isResolved());
         self::assertSame($payload, Promise\wait($promise));

@@ -6,65 +6,67 @@ namespace Bakabot;
 
 use Acclimate\Container\ArrayContainer;
 use Acclimate\Container\CompositeContainer;
-use Amp\Loop;
 use Amp\Loop\Driver;
-use Bakabot\Component\Collection as ComponentCollection;
 use Bakabot\Component\Component;
+use Bakabot\Component\Components;
 use Bakabot\Component\Core\Amp\Loop\ReloadException;
 use DI\ContainerBuilder;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
-final class Kernel implements KernelInterface
+final class Kernel
 {
-    private ComponentCollection $components;
+    private bool $compileContainer = false;
+    private Components $components;
     private ?CompositeContainer $container = null;
-    private bool $enableContainerCompilation = false;
-    private ContainerInterface $wrappedContainer;
+    private ContainerInterface $delegateContainer;
 
     /**
-     * @param ComponentCollection|Component[] $components
-     * @param ContainerInterface|array $wrappedContainer
+     * @param Components|Component[] $components
+     * @param ContainerInterface|array $delegateContainer
      */
     public function __construct(
-        ComponentCollection|array $components,
-        ContainerInterface|array $wrappedContainer = []
+        Components|array $components,
+        ContainerInterface|array $delegateContainer = []
     ) {
         if (is_array($components)) {
-            $components = new ComponentCollection($components);
+            $components = new Components(...$components);
         }
 
         $this->components = $components;
 
-        if (is_array($wrappedContainer)) {
-            $wrappedContainer = new ArrayContainer($wrappedContainer);
+        if (is_array($delegateContainer)) {
+            $delegateContainer = new ArrayContainer($delegateContainer);
         }
 
-        $this->wrappedContainer = $wrappedContainer;
+        $this->delegateContainer = $delegateContainer;
     }
 
-    private function compileContainer(ContainerBuilder $containerBuilder): void
+    public function __destruct()
     {
-        if ($this->enableContainerCompilation === false) {
-            return;
-        }
-
-        $tmpContainer = (clone $containerBuilder)->build();
-
-        /** @var string $cacheDir */
-        $cacheDir = $tmpContainer->get('bakabot.dirs.cache');
-        $containerBuilder->enableCompilation($cacheDir);
-
-        unset($tmpContainer);
+        $this->shutdown();
+        unset($this->delegateContainer);
     }
 
-    private function prepareContainerBuilder(CompositeContainer $container): ContainerBuilder
+    private function buildContainer(ContainerBuilder $containerBuilder): ContainerInterface
+    {
+        if ($this->compileContainer) {
+            $tmpContainer = (clone $containerBuilder)->build();
+
+            /** @var string $cacheDir */
+            $cacheDir = $tmpContainer->get('bakabot.dirs.cache');
+            $containerBuilder->enableCompilation($cacheDir, 'BakabotContainer');
+        }
+
+        return $containerBuilder->build();
+    }
+
+    private function prepareContainerBuilder(ContainerInterface $delegateContainer): ContainerBuilder
     {
         /** @var ContainerBuilder $containerBuilder */
-        $containerBuilder = $container->has(ContainerBuilder::class)
-            ? $container->get(ContainerBuilder::class)
-            : new ContainerBuilder()
-        ;
+        $containerBuilder = $delegateContainer->has(ContainerBuilder::class)
+            ? $delegateContainer->get(ContainerBuilder::class)
+            : new ContainerBuilder();
 
         $containerBuilder->addDefinitions(
             [
@@ -75,12 +77,6 @@ final class Kernel implements KernelInterface
         return $containerBuilder;
     }
 
-    public function __destruct()
-    {
-        $this->shutdown();
-        unset($this->container, $this->wrappedContainer);
-    }
-
     public function boot(): ContainerInterface
     {
         if ($this->container !== null) {
@@ -88,7 +84,7 @@ final class Kernel implements KernelInterface
         }
 
         $container = new CompositeContainer();
-        $container->addContainer($this->wrappedContainer);
+        $container->addContainer($this->delegateContainer);
 
         $containerBuilder = $this->prepareContainerBuilder($container);
 
@@ -96,9 +92,7 @@ final class Kernel implements KernelInterface
             $component->register($containerBuilder);
         }
 
-        $this->compileContainer($containerBuilder);
-
-        $container->addContainer($containerBuilder->build());
+        $container->addContainer($this->buildContainer($containerBuilder));
 
         foreach ($this->components as $component) {
             $component->boot($container);
@@ -107,12 +101,12 @@ final class Kernel implements KernelInterface
         return $this->container = $container;
     }
 
-    public function enableContainerCompilation(): void
+    public function compileContainer(): void
     {
-        $this->enableContainerCompilation = true;
+        $this->compileContainer = true;
     }
 
-    public function getComponents(): ComponentCollection
+    public function components(): Components
     {
         return $this->components;
     }
@@ -125,32 +119,19 @@ final class Kernel implements KernelInterface
         };
     }
 
-    public function stop(Driver $driver): callable
-    {
-        return static function (string $watcherId) use ($driver) {
-            $driver->cancel($watcherId);
-            $driver->stop();
-        };
-    }
-
     public function start(?callable $callback = null): void
     {
         reload:
         $container = $this->boot();
-
-        /** @var Driver $driver */
-        $driver = $container->get(Loop::class);
+        $driver = $container->get(Driver::class);
+        $logger = $container->get(LoggerInterface::class);
 
         if ($callback) {
             $driver->defer($callback);
         }
 
         try {
-            $driver->defer(static function () use ($container, $driver) {
-                /** @var LoggerInterface $logger */
-                $logger = $container->get(LoggerInterface::class);
-                $logger->debug(sprintf('Loop started using %s.', $driver::class));
-            });
+            $driver->defer(static fn() => $logger->debug(sprintf('Loop started using %s.', $driver::class)));
             $driver->run();
         } catch (ReloadException) {
             $this->shutdown();
@@ -162,7 +143,7 @@ final class Kernel implements KernelInterface
 
     public function shutdown(): void
     {
-        if ($this->container === null) {
+        if (!isset($this->container)) {
             return;
         }
 
@@ -172,6 +153,14 @@ final class Kernel implements KernelInterface
             $component->shutdown($this->container);
         }
 
-        $this->container = null;
+        unset($this->container);
+    }
+
+    public function stop(Driver $driver): callable
+    {
+        return static function (string $watcherId) use ($driver) {
+            $driver->cancel($watcherId);
+            $driver->stop();
+        };
     }
 }

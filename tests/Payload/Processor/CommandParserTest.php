@@ -5,24 +5,24 @@ declare(strict_types = 1);
 namespace Bakabot\Payload\Processor;
 
 use Amp\Promise;
-use Bakabot\Chat\Channel\ChannelInterface;
-use Bakabot\Chat\Message\MessageInterface;
-use Bakabot\Command\Payload as CommandPayload;
+use Bakabot\Chat\Channel\Channel;
+use Bakabot\Chat\Message\Message;
+use Bakabot\Command\BasePayload as CommandPayload;
 use Bakabot\Command\Prefix\Prefix;
-use Bakabot\EnvironmentInterface;
-use Bakabot\Payload\Payload;
+use Bakabot\Environment;
+use Bakabot\Payload\BasePayload;
 use PHPUnit\Framework\TestCase;
 
 class CommandParserTest extends TestCase
 {
-    private function createPayloadWithMessage(string $content): Payload
+    private function createPayloadWithMessage(string $content): BasePayload
     {
-        $message = $this->createMock(MessageInterface::class);
+        $message = $this->createMock(Message::class);
         $message->method('getContent')->willReturn($content);
 
-        return new Payload(
-            $this->createMock(EnvironmentInterface::class),
-            $this->createMock(ChannelInterface::class),
+        return new BasePayload(
+            $this->createMock(Environment::class),
+            $this->createMock(Channel::class),
             $message,
             null,
         );

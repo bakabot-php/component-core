@@ -8,7 +8,7 @@ use Amp\Promise;
 use Bakabot\Chat\Server\Language\Language;
 use Bakabot\Chat\Server\Server;
 use Bakabot\Command\Prefix\Prefix;
-use Bakabot\EnvironmentInterface;
+use Bakabot\Environment;
 use Bakabot\Payload\PayloadInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -20,10 +20,10 @@ class SettingsIntegrationTest extends TestCase
         $language = new Language('en');
         $prefix = new Prefix('!');
 
-        $settingsSource = new JsonDatabaseSource('/tmp/database.json', $language, $prefix);
+        $settingsSource = new JsonFileSource('/tmp/database.json', $language, $prefix);
 
         $payload = $this->createMock(PayloadInterface::class);
-        $settings = Promise\wait($settingsSource->getServerSettings($payload));
+        $settings = Promise\wait($settingsSource->settings($payload));
 
         self::assertEquals(new AllowedCommands([]), $settings->getAllowedCommands());
         self::assertEquals($language, $settings->getLanguage());
@@ -36,7 +36,7 @@ class SettingsIntegrationTest extends TestCase
         $payload = $this->createMock(PayloadInterface::class);
         $payload->method('getServer')->willReturn(new Server('1', 'test'));
 
-        $environment = $this->createMock(EnvironmentInterface::class);
+        $environment = $this->createMock(Environment::class);
         $environment->method('getName')->willReturn('test');
 
         $payload->method('getEnvironment')->willReturn($environment);
@@ -44,10 +44,10 @@ class SettingsIntegrationTest extends TestCase
         $language = new Language('en');
         $prefix = new Prefix('!');
 
-        $settingsSource = new JsonDatabaseSource('/tmp/database.json', $language, $prefix);
-        $settings = Promise\wait($settingsSource->getServerSettings($payload));
+        $settingsSource = new JsonFileSource('/tmp/database.json', $language, $prefix);
+        $settings = Promise\wait($settingsSource->settings($payload));
 
-        self::assertEquals(ServerSettings::withDefaults($language, $prefix), $settings);
+        self::assertEquals(Settings::withDefaults($language, $prefix), $settings);
     }
 
     /** @test */
@@ -69,14 +69,14 @@ class SettingsIntegrationTest extends TestCase
         $payload = $this->createMock(PayloadInterface::class);
         $payload->method('getServer')->willReturn(new Server('1', 'test'));
 
-        $environment = $this->createMock(EnvironmentInterface::class);
+        $environment = $this->createMock(Environment::class);
         $environment->method('getName')->willReturn('test');
 
         $payload->method('getEnvironment')->willReturn($environment);
 
-        $settingsSource = new JsonDatabaseSource('/tmp/database.json', new Language('en'), new Prefix('!'));
-        Promise\wait($settingsSource->getServerSettings($payload));
-        $settings = Promise\wait($settingsSource->getServerSettings($payload));
+        $settingsSource = new JsonFileSource('/tmp/database.json', new Language('en'), new Prefix('!'));
+        Promise\wait($settingsSource->settings($payload));
+        $settings = Promise\wait($settingsSource->settings($payload));
 
         self::assertEquals(new AllowedCommands(['test']), $settings->getAllowedCommands());
         self::assertEquals(new Language('de'), $settings->getLanguage());

@@ -17,7 +17,7 @@ class ChannelTest extends TestCase
             true,
         );
 
-        self::assertSame($id, $channel->getId());
+        self::assertSame($id, $channel->id());
         self::assertSame('some-channel', $channel->getName());
         self::assertTrue($channel->isPrivate());
         self::assertSame($id, (string) $channel);

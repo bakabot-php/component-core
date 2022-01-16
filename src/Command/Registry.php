@@ -11,22 +11,20 @@ use Traversable;
 
 final class Registry implements IteratorAggregate
 {
-    private Collection $commands;
+    private Commands $commands;
 
     private const DELIMITER = ':';
 
     public function __construct()
     {
-        $this->commands = new Collection();
+        $this->commands = new Commands();
     }
 
-    public function addCommand(CommandInterface $command): void
+    public function add(Command $command): void
     {
-        $name = $command->getName();
-
-        foreach ($command->getSupportedEnvironments() as $environment) {
+        foreach ($command->supportedEnvironments() as $environment) {
             $this->commands->push(
-                sprintf('%s%s%s', $environment, self::DELIMITER, $name),
+                sprintf('%s%s%s', $environment, self::DELIMITER, $command->name()),
                 $command
             );
         }
@@ -68,7 +66,7 @@ final class Registry implements IteratorAggregate
         return $copy;
     }
 
-    public function getCommands(): Collection
+    public function getCommands(): Commands
     {
         return $this->commands;
     }

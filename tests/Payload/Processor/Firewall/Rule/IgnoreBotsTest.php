@@ -5,11 +5,11 @@ declare(strict_types = 1);
 namespace Bakabot\Payload\Processor\Firewall\Rule;
 
 use Amp\Promise;
-use Bakabot\Chat\Channel\ChannelInterface;
-use Bakabot\Chat\Message\MessageInterface;
-use Bakabot\Chat\User\UserInterface;
-use Bakabot\EnvironmentInterface;
-use Bakabot\Payload\Payload;
+use Bakabot\Chat\Channel\Channel;
+use Bakabot\Chat\Message\Message;
+use Bakabot\Chat\User\User;
+use Bakabot\Environment;
+use Bakabot\Payload\BasePayload;
 use Bakabot\Payload\PayloadInterface;
 use Bakabot\Payload\Processor\Firewall\RuleViolation;
 use PHPUnit\Framework\TestCase;
@@ -18,19 +18,19 @@ class IgnoreBotsTest extends TestCase
 {
     private function createPayload(bool $isBot): PayloadInterface
     {
-        $environment = $this->createMock(EnvironmentInterface::class);
+        $environment = $this->createMock(Environment::class);
         $environment->method('getName')->willReturn('discord');
 
-        $author = $this->createMock(UserInterface::class);
+        $author = $this->createMock(User::class);
         $author->method('getId')->willReturn('1234');
         $author->method('isBot')->willReturn($isBot);
 
-        $message = $this->createMock(MessageInterface::class);
+        $message = $this->createMock(Message::class);
         $message->method('getAuthor')->willReturn($author);
 
-        return new Payload(
+        return new BasePayload(
             $environment,
-            $this->createMock(ChannelInterface::class),
+            $this->createMock(Channel::class),
             $message,
             null,
         );

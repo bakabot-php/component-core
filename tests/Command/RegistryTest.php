@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 
 class RegistryTest extends TestCase
 {
-    private function getTestCommand(string $environment = 'discord'): CommandInterface
+    private function getTestCommand(string $environment = 'discord'): Command
     {
         return new class($environment) extends AbstractCommand {
             private string $environment;
@@ -22,12 +22,12 @@ class RegistryTest extends TestCase
                 $this->environment = $environment;
             }
 
-            public function getName(): string
+            public function name(): string
             {
                 return 'test';
             }
 
-            public function getSupportedEnvironments(): array
+            public function supportedEnvironments(): array
             {
                 return [$this->environment];
             }
@@ -53,7 +53,7 @@ class RegistryTest extends TestCase
         $command = $this->getTestCommand();
 
         $registry = new Registry();
-        $registry->addCommand($command);
+        $registry->add($command);
 
         self::assertSame(1, iterator_count($registry));
         self::assertSame(['discord:test' => $command], iterator_to_array($registry));
@@ -67,8 +67,8 @@ class RegistryTest extends TestCase
         $command = $this->getTestCommand();
 
         $registry = new Registry();
-        $registry->addCommand($command);
-        $registry->addCommand($command);
+        $registry->add($command);
+        $registry->add($command);
     }
 
     /** @test */
@@ -77,7 +77,7 @@ class RegistryTest extends TestCase
         $command = $this->getTestCommand();
 
         $registry = new Registry();
-        $registry->addCommand($command);
+        $registry->add($command);
 
         $emptyRegistry = $registry->filterByNames(['does-not-exist']);
 
@@ -90,12 +90,12 @@ class RegistryTest extends TestCase
         $command = $this->getTestCommand();
 
         $registry = new Registry();
-        $registry->addCommand($command);
+        $registry->add($command);
 
         $filteredRegistry = $registry->filterByEnvironment('discord');
 
         self::assertCount(1, $filteredRegistry);
-        self::assertSame([$command->getName() => $command], iterator_to_array($filteredRegistry));
+        self::assertSame([$command->name() => $command], iterator_to_array($filteredRegistry));
     }
 
     /** @test */
@@ -104,13 +104,13 @@ class RegistryTest extends TestCase
         $command = $this->getTestCommand();
 
         $registry = new Registry();
-        $registry->addCommand($command);
+        $registry->add($command);
 
         $filteredRegistry = $registry->filterByEnvironment('discord');
-        $filteredRegistry = $filteredRegistry->filterByNames([$command->getName()]);
+        $filteredRegistry = $filteredRegistry->filterByNames([$command->name()]);
 
         self::assertCount(1, $filteredRegistry);
-        self::assertSame([$command->getName() => $command], iterator_to_array($filteredRegistry));
+        self::assertSame([$command->name() => $command], iterator_to_array($filteredRegistry));
     }
 
     /** @test */
@@ -120,10 +120,10 @@ class RegistryTest extends TestCase
         $twitchCommand = $this->getTestCommand('twitch');
 
         $registry1 = new Registry();
-        $registry1->addCommand($discordCommand);
+        $registry1->add($discordCommand);
 
         $registry2 = new Registry();
-        $registry2->addCommand($twitchCommand);
+        $registry2->add($twitchCommand);
 
         self::assertEquals(
             $registry1->merge($registry2),

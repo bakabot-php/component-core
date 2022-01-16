@@ -6,16 +6,16 @@ namespace Bakabot\Payload\Processor;
 
 use Amp\Promise;
 use Amp\Success;
-use Bakabot\Action\ActionInterface;
+use Bakabot\Action\AbstractAction;
 use Bakabot\Action\DoNothing;
-use Bakabot\Chat\Channel\ChannelInterface;
-use Bakabot\Chat\Message\MessageInterface;
+use Bakabot\Chat\Channel\Channel;
+use Bakabot\Chat\Message\Message;
 use Bakabot\Command\AbstractCommand;
-use Bakabot\Command\Collection as CommandCollection;
+use Bakabot\Command\Commands as CommandCollection;
 use Bakabot\Command\HelpCommand;
-use Bakabot\Command\Payload as CommandPayload;
-use Bakabot\EnvironmentInterface;
-use Bakabot\Payload\Payload;
+use Bakabot\Command\BasePayload as CommandPayload;
+use Bakabot\Environment;
+use Bakabot\Payload\BasePayload;
 use Bakabot\Payload\PayloadInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -25,14 +25,14 @@ class CommandRunnerTest extends TestCase
     {
         $helpCommand ??= $this->createMock(HelpCommand::class);
 
-        $environment = $this->createMock(EnvironmentInterface::class);
+        $environment = $this->createMock(Environment::class);
         $environment->method('getHelpCommand')->willReturn($helpCommand);
 
         return new CommandPayload(
-            new Payload(
+            new BasePayload(
                 $environment,
-                $this->createMock(ChannelInterface::class),
-                $this->createMock(MessageInterface::class),
+                $this->createMock(Channel::class),
+                $this->createMock(Message::class),
                 null,
             ),
             '!',
@@ -61,7 +61,7 @@ class CommandRunnerTest extends TestCase
         $processor = new CommandRunner(new CommandCollection());
         $action = Promise\wait($processor->process($payload));
 
-        self::assertInstanceOf(ActionInterface::class, $action);
+        self::assertInstanceOf(AbstractAction::class, $action);
     }
 
     /** @test */
@@ -75,7 +75,7 @@ class CommandRunnerTest extends TestCase
         $command->method('run')->willReturn(new Success(new DoNothing()));
 
         $commands = new CommandCollection();
-        $commands->push($command->getName(), $command);
+        $commands->push($command->name(), $command);
 
         $processor = new CommandRunner($commands);
         $action = Promise\wait($processor->process($payload));

@@ -91,7 +91,7 @@ class ParserTest extends TestCase
 
         self::assertEquals($definedOptions, $definition->getDefinedOptions());
         self::assertEquals($requiredOptions, $definition->getRequiredOptions());
-        self::assertSame($greedyArgumentIndex, $definition->getGreedyArgumentIndex());
+        self::assertSame($greedyArgumentIndex, $definition->greedyArgumentPosition());
     }
 
     /** @test */

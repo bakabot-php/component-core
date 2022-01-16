@@ -19,7 +19,7 @@ class TestCommand extends AbstractCommand
 {
     public function args(): array
     {
-        return $this->getArguments();
+        return $this->arguments();
     }
 
     public function run(): Promise
@@ -30,9 +30,9 @@ class TestCommand extends AbstractCommand
 
 class AbstractCommandTest extends TestCase
 {
-    private function createTestPayload(string $requestedCommand = ''): Payload
+    private function createTestPayload(string $requestedCommand = ''): BasePayload
     {
-        return new Payload(
+        return new BasePayload(
             $this->createMock(PayloadInterface::class),
             '!',
             HelpCommand::NAME,
@@ -44,13 +44,13 @@ class AbstractCommandTest extends TestCase
     /** @test */
     public function common_accessors(): void
     {
-        $command = new HelpCommand(new Collection());
+        $command = new HelpCommand(new Commands());
         $command->bind($this->createTestPayload('ping'));
 
-        self::assertSame('[command:string]', $command->getArgumentExpression());
-        self::assertSame('{{ help.description }}', $command->getDescription());
-        self::assertSame('{{ help.flavor_text }}', $command->getHelpText());
-        self::assertSame([], $command->getSupportedEnvironments());
+        self::assertSame('[command:string]', $command->argumentExpression());
+        self::assertSame('{{ help.description }}', $command->description());
+        self::assertSame('{{ help.flavor_text }}', $command->helpText());
+        self::assertSame([], $command->supportedEnvironments());
         self::assertSame(HelpCommand::NAME, (string) $command);
     }
 
@@ -60,8 +60,8 @@ class AbstractCommandTest extends TestCase
         $command = new TestCommand();
         $command->bind($this->createTestPayload('bar'));
 
-        self::assertSame('[foo:string]', $command->getArgumentExpression());
+        self::assertSame('[foo:string]', $command->argumentExpression());
         self::assertSame(['foo' => 'bar'], $command->args());
-        self::assertEquals(['discord', 'twitch'], $command->getSupportedEnvironments());
+        self::assertEquals(['discord', 'twitch'], $command->supportedEnvironments());
     }
 }

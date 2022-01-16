@@ -4,12 +4,12 @@ declare(strict_types = 1);
 
 namespace Bakabot\Command;
 
-use Bakabot\Chat\Channel\ChannelInterface;
-use Bakabot\Chat\Message\MessageInterface;
-use Bakabot\Chat\Server\ServerInterface;
-use Bakabot\Command\Payload as CommandPayload;
-use Bakabot\EnvironmentInterface;
-use Bakabot\Payload\Payload;
+use Bakabot\Chat\Channel\Channel;
+use Bakabot\Chat\Message\Message;
+use Bakabot\Chat\Server\Server;
+use Bakabot\Command\BasePayload as CommandPayload;
+use Bakabot\Environment;
+use Bakabot\Payload\BasePayload;
 use PHPUnit\Framework\TestCase;
 
 class PayloadTest extends TestCase
@@ -17,11 +17,11 @@ class PayloadTest extends TestCase
     /** @test */
     public function acts_as_dto(): void
     {
-        $payload = new Payload(
-            $environment = $this->createMock(EnvironmentInterface::class),
-            $channel = $this->createMock(ChannelInterface::class),
-            $message = $this->createMock(MessageInterface::class),
-            $server = $this->createMock(ServerInterface::class),
+        $payload = new BasePayload(
+            $environment = $this->createMock(Environment::class),
+            $channel = $this->createMock(Channel::class),
+            $message = $this->createMock(Message::class),
+            $server = $this->createMock(Server::class),
         );
 
         $commandPayload = new CommandPayload(

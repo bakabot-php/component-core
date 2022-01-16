@@ -4,24 +4,12 @@ declare(strict_types = 1);
 
 namespace Bakabot\Chat\Server;
 
-final class Server implements ServerInterface
+use Bakabot\Chat\Channel\Channel;
+use Bakabot\Chat\Target;
+
+interface Server extends Target
 {
-    private string $id;
-    private ?string $name;
+    public function defaultChannel(): Channel;
 
-    public function __construct(string $id, ?string $name)
-    {
-        $this->id = $id;
-        $this->name = $name;
-    }
-
-    public function getId(): string
-    {
-        return $this->id;
-    }
-
-    public function getName(): ?string
-    {
-        return $this->name;
-    }
+    public function name(): string;
 }

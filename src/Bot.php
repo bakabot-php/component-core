@@ -9,14 +9,14 @@ use Psr\Log\LoggerInterface;
 
 final class Bot
 {
-    private KernelInterface $kernel;
+    private Kernel $kernel;
 
-    public function __construct(KernelInterface $kernel)
+    public function __construct(Kernel $kernel)
     {
         $this->kernel = $kernel;
     }
 
-    public function getContainer(): ContainerInterface
+    public function container(): ContainerInterface
     {
         return $this->kernel->boot();
     }
@@ -30,7 +30,7 @@ final class Bot
         $logger->debug('Kernel booted.');
 
         try {
-            $logger->info('Starting kernel...');
+            $logger->info('Starting...');
             $this->kernel->start($callback);
         } finally {
             $logger->debug('Shutting down...');

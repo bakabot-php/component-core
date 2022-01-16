@@ -25,7 +25,7 @@ class RichPresenceUserTest extends TestCase
         self::assertSame('Nayleen', $richPresenceUser->getUsername());
         self::assertSame('Minaire', $richPresenceUser->getNickname());
         self::assertFalse($richPresenceUser->isBot());
-        self::assertSame($imageUrl, $richPresenceUser->getDisplayImageUrl());
+        self::assertSame($imageUrl, $richPresenceUser->getAvatarUrl());
         self::assertSame($id, (string) $richPresenceUser);
     }
 

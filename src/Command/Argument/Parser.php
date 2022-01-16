@@ -13,9 +13,10 @@ final class Parser
         $type = null;
 
         if (str_contains($token, ':') !== false) {
-            if (substr_count($token, ':') > 1) {
-                throw new InvalidArgumentException(sprintf('Invalid token [%s].', $token));
-            }
+            assert(
+                substr_count($token, ':') === 1,
+                new InvalidArgumentException(sprintf('Invalid token [%s].', $token))
+            );
 
             [$token, $type] = explode(':', $token);
         }
@@ -113,7 +114,7 @@ final class Parser
         }
 
         if ($greedyArgumentIndex !== null) {
-            $definition->setGreedyArgumentIndex($greedyArgumentIndex);
+            $definition->setGreedyArgumentPosition($greedyArgumentIndex);
         }
 
         return $definition;

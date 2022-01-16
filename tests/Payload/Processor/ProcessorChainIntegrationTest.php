@@ -6,12 +6,12 @@ namespace Bakabot\Payload\Processor;
 
 use Amp\Promise;
 use Bakabot\Action\DoNothing;
-use Bakabot\Chat\Channel\ChannelInterface;
-use Bakabot\Chat\Message\IncomingMessage;
+use Bakabot\Chat\Channel\Channel;
+use Bakabot\Chat\Message\Message;
 use Bakabot\Chat\User\User;
 use Bakabot\Component\CoreComponent;
-use Bakabot\EnvironmentInterface;
-use Bakabot\Payload\Payload;
+use Bakabot\Environment;
+use Bakabot\Payload\BasePayload;
 use DateTimeImmutable;
 use DI\ContainerBuilder;
 use PHPUnit\Framework\TestCase;
@@ -49,13 +49,13 @@ class ProcessorChainIntegrationTest extends TestCase
     /** @test */
     public function preconfigured_chain_firewalls_bots(): void
     {
-        $environment = $this->createMock(EnvironmentInterface::class);
+        $environment = $this->createMock(Environment::class);
         $environment->method('getName')->willReturn('test');
 
-        $payload = new Payload(
+        $payload = new BasePayload(
             $environment,
-            $channel = $this->createMock(ChannelInterface::class),
-            new IncomingMessage(
+            $channel = $this->createMock(Channel::class),
+            new Message(
                 '1',
                 'Beep boop',
                 $channel,

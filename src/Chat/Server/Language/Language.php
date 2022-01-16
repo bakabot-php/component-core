@@ -6,9 +6,9 @@ namespace Bakabot\Chat\Server\Language;
 
 use Stringable;
 
-final class Language implements LanguageSourceInterface, Stringable
+final class Language implements LanguageSource
 {
-    private string $language;
+    public /* readonly */ string $language;
 
     public function __construct(string|Stringable $language)
     {
@@ -18,7 +18,7 @@ final class Language implements LanguageSourceInterface, Stringable
         $this->language = $trimmedLanguage;
     }
 
-    public function getLanguage(): Language
+    public function language(): Language
     {
         return $this;
     }

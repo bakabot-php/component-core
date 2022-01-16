@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Bakabot\Action;
 
-use Bakabot\Chat\Channel\ChannelInterface;
+use Bakabot\Chat\Channel\Channel;
 use PHPUnit\Framework\TestCase;
 
 class SendTemplatedMessageTest extends TestCase
@@ -18,7 +18,7 @@ class SendTemplatedMessageTest extends TestCase
         ];
 
         $action = new SendTemplatedMessage(
-            $this->createMock(ChannelInterface::class),
+            $this->createMock(Channel::class),
             $message,
             $context
         );

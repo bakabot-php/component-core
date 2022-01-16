@@ -7,7 +7,7 @@ namespace Bakabot\Chat\Message\Placeholder;
 use Stringable;
 use Twig\Environment as Twig;
 
-final class TwigFormatter implements FormatterInterface
+final class TwigFormatter implements Formatter
 {
     private Replacements $replacements;
     private Twig $twig;

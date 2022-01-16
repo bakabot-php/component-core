@@ -14,11 +14,11 @@ class BotTest extends TestCase
     /** @test */
     public function getContainer_boots_kernel(): void
     {
-        $kernel = $this->createMock(KernelInterface::class);
+        $kernel = $this->createMock(Kernel::class);
         $kernel->expects($this->once())->method('boot');
 
         $bot = new Bot($kernel);
-        $bot->getContainer();
+        $bot->container();
     }
 
     /** @test */
@@ -26,7 +26,7 @@ class BotTest extends TestCase
     {
         $container = new ArrayContainer([LoggerInterface::class => new NullLogger()]);
 
-        $kernel = $this->createMock(KernelInterface::class);
+        $kernel = $this->createMock(Kernel::class);
         $kernel->expects($this->once())->method('boot')->willReturn($container);
         $kernel->expects($this->once())->method('start');
         $kernel->expects($this->once())->method('shutdown');

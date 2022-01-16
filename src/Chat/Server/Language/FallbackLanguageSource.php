@@ -6,23 +6,28 @@ namespace Bakabot\Chat\Server\Language;
 
 use Throwable;
 
-final class FallbackLanguageSource implements LanguageSourceInterface
+final class FallbackLanguageSource implements LanguageSource
 {
-    private LanguageSourceInterface $fallback;
-    private LanguageSourceInterface $main;
+    private LanguageSource $fallback;
+    private LanguageSource $main;
 
-    public function __construct(LanguageSourceInterface $main, LanguageSourceInterface $fallback)
+    public function __construct(LanguageSource $main, LanguageSource $fallback)
     {
         $this->fallback = $fallback;
         $this->main = $main;
     }
 
-    public function getLanguage(): Language
+    public function language(): Language
     {
         try {
-            return $this->main->getLanguage();
+            return $this->main->language();
         } catch (Throwable) {
-            return $this->fallback->getLanguage();
+            return $this->fallback->language();
         }
+    }
+
+    public function __toString()
+    {
+        return (string) $this->language();
     }
 }

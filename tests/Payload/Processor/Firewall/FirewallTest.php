@@ -9,7 +9,7 @@ use Amp\Promise;
 use Bakabot\Action\DoNothing;
 use Bakabot\Payload\PayloadInterface;
 use Bakabot\Payload\Processor\Firewall\Rule\IgnoreBots;
-use Bakabot\Payload\Processor\Firewall\Rule\RuleInterface;
+use Bakabot\Payload\Processor\Firewall\Rule\Rule;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -42,7 +42,7 @@ class FirewallTest extends TestCase
     public function returns_do_nothing_action_if_rule_is_violated(): void
     {
         $payload = $this->createMock(PayloadInterface::class);
-        $fail = $this->createMock(RuleInterface::class);
+        $fail = $this->createMock(Rule::class);
 
         $fail->method('enforce')->willReturn(new Failure(new RuleViolation($fail)));
         $fail->method('getName')->willReturn('test:dummy');
@@ -59,12 +59,12 @@ class FirewallTest extends TestCase
     public function short_circuits_rule_evaluation_after_first_violation(): void
     {
         $payload = $this->createMock(PayloadInterface::class);
-        $fail = $this->createMock(RuleInterface::class);
+        $fail = $this->createMock(Rule::class);
 
         $fail->method('enforce')->willReturn(new Failure(new RuleViolation($fail)));
         $fail->method('getName')->willReturn('test:fail');
 
-        $noop = $this->createMock(RuleInterface::class);
+        $noop = $this->createMock(Rule::class);
         $noop->expects($this->never())->method('enforce');
         $noop->method('getName')->willReturn('test:noop');
 

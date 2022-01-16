@@ -4,34 +4,42 @@ declare(strict_types = 1);
 
 namespace Bakabot\Action;
 
-use Bakabot\Chat\Message\MessageInterface;
-use Bakabot\Chat\TargetInterface;
-use LogicException;
+use BadMethodCallException;
+use Bakabot\Component\Core\Common\Cloneable;
 
-final class DoNothing implements ActionInterface
+final class DoNothing implements Action
 {
-    public function deleteTriggerMessage(?bool $deleteTriggerMessage = null): bool
+    use Cloneable;
+
+    private /* readonly */ bool $removesTriggerMessage;
+
+    public function __construct(bool $removesTriggerMessage = false)
+    {
+        $this->removesTriggerMessage = $removesTriggerMessage;
+    }
+
+    private function unsupported(): BadMethodCallException
+    {
+        return new BadMethodCallException(self::class . ' does nothing.');
+    }
+
+    public function mentionRecipient(): DoNothing
+    {
+        throw $this->unsupported();
+    }
+
+    public function mentionsRecipient(): bool
     {
         return false;
     }
 
-    public function getTriggerMessage(): MessageInterface
+    public function removeTriggerMessage(bool $removesTriggerMessage = true): DoNothing
     {
-        throw new LogicException();
+        return $this->copy(removesTriggerMessage: $removesTriggerMessage);
     }
 
-    public function setTriggerMessage(MessageInterface $triggerMessage): void
+    public function removesTriggerMessage(): bool
     {
-
-    }
-
-    public function getTarget(): TargetInterface
-    {
-        throw new LogicException();
-    }
-
-    public function shouldPingRecipient(): bool
-    {
-        return false;
+        return $this->removesTriggerMessage;
     }
 }
