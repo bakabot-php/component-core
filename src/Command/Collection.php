@@ -16,13 +16,7 @@ final class Collection implements IteratorAggregate
 
     public function findByName(string $commandName): ?CommandInterface
     {
-        foreach ($this->commands as $name => $command) {
-            if ($commandName === $name) {
-                return $command;
-            }
-        }
-
-        return null;
+        return $this->commands[$commandName] ?? null;
     }
 
     /**

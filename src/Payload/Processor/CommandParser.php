@@ -5,9 +5,12 @@ declare(strict_types = 1);
 namespace Bakabot\Payload\Processor;
 
 use Amp\Promise;
+use Amp\Success;
 use Bakabot\Command\Payload as CommandPayload;
 use Bakabot\Command\Prefix\Prefix;
 use Bakabot\Payload\PayloadInterface;
+
+use function Amp\call;
 
 final class CommandParser extends AbstractProcessor
 {
@@ -42,27 +45,29 @@ final class CommandParser extends AbstractProcessor
      */
     public function process(PayloadInterface $payload): Promise
     {
-        $message = $payload->getMessage()->getContent();
+        return call(function () use ($payload) {
+            $message = $payload->getMessage()->getContent();
 
-        if ($this->prefix->matches($message) === false) {
-            return $this->payload($payload); // continue with original payload
-        }
+            if ($this->prefix->matches($message) === false) {
+                return new Success($payload); // continue with original payload
+            }
 
-        $messageWithoutPrefix = $this->normalizeMessage($message);
-        $arguments = $this->parseArguments($messageWithoutPrefix);
+            $messageWithoutPrefix = $this->normalizeMessage($message);
+            $arguments = $this->parseArguments($messageWithoutPrefix);
 
-        $name = array_shift($arguments);
-        $rawArguments = trim(preg_replace("#^$name#", '', $messageWithoutPrefix));
+            $name = array_shift($arguments);
+            $rawArguments = trim(preg_replace("#^$name#", '', $messageWithoutPrefix));
 
-        // continue with command payload
-        $commandPayload = new CommandPayload(
-            $payload,
-            (string) $this->prefix,
-            $name,
-            $arguments,
-            $rawArguments
-        );
+            // continue with command payload
+            $commandPayload = new CommandPayload(
+                $payload,
+                (string) $this->prefix,
+                $name,
+                $arguments,
+                $rawArguments
+            );
 
-        return $this->payload($commandPayload);
+            return new Success($commandPayload);
+        });
     }
 }

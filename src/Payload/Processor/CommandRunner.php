@@ -6,12 +6,16 @@ namespace Bakabot\Payload\Processor;
 
 use Amp\Deferred;
 use Amp\Promise;
+use Amp\Success;
 use Bakabot\Action\ActionInterface;
+use Bakabot\Action\DoNothing;
 use Bakabot\Command\AbstractCommand;
 use Bakabot\Command\Collection;
 use Bakabot\Command\HelpCommand;
 use Bakabot\Command\Payload as CommandPayload;
 use Bakabot\Payload\PayloadInterface;
+
+use function Amp\call;
 
 final class CommandRunner extends AbstractProcessor
 {
@@ -31,27 +35,24 @@ final class CommandRunner extends AbstractProcessor
      */
     public function process(PayloadInterface $payload): Promise
     {
-        // can only execute command payloads
-        if (!($payload instanceof CommandPayload)) {
-            return $this->payload($payload);
-        }
+        return call(function () use ($payload) {
+            // can only execute command payloads
+            if (!($payload instanceof CommandPayload)) {
+                return new Success($payload);
+            }
 
-        $deferred = new Deferred();
+            $requestedCommand = $payload->getCommandName();
+            $command = $this->commands->findByName($requestedCommand);
 
-        $requestedCommand = $payload->getCommandName();
-        $command = $this->commands->findByName($requestedCommand);
+            if ($command === null) {
+                return new Success(new DoNothing());
+            }
 
-        if ($command === null) {
-            return $this->promise(
-                HelpCommand::createCommandOverview($this->commands, $payload, $requestedCommand),
-                $deferred
-            );
-        }
+            if ($command instanceof AbstractCommand) {
+                $command->bind($payload);
+            }
 
-        if ($command instanceof AbstractCommand) {
-            $command->bind($payload);
-        }
-
-        return $this->promise($command->run(), $deferred);
+            return $command->run();
+        });
     }
 }
